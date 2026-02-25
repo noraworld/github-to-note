@@ -1,9 +1,16 @@
 from .articles import create_article, update_article_draft
 from .auth import get_note_cookies
-from .images import upload_markdown_images
+from .images import upload_markdown_images, upload_note_eyecatch_from_url
 
 
-def post_to_note(email, password, title, markdown_content, image_path=None):
+def post_to_note(
+    email,
+    password,
+    title,
+    markdown_content,
+    image_path=None,
+    eyecatch_image_url=None,
+):
     """noteに記事を投稿するメインフロー"""
     print("1. noteにログイン中...")
     cookies = get_note_cookies(email, password)
@@ -36,6 +43,10 @@ def post_to_note(email, password, title, markdown_content, image_path=None):
     )
     if not success:
         return False
+
+    if eyecatch_image_url:
+        print("6. YAML image をサムネイルとしてアップロード中...")
+        upload_note_eyecatch_from_url(cookies, article_id, eyecatch_image_url)
 
     print("\n✅ 投稿完了！")
     print(f"記事URL: https://note.com/your_username/n/{article_key}")

@@ -95,6 +95,7 @@ def main():
 
     front_matter, body = _split_front_matter_and_body(content)
     title = _extract_title_from_front_matter(front_matter)
+    eyecatch_image_url = _extract_front_matter_value(front_matter, "image")
     content = body
 
     if not email:
@@ -110,7 +111,14 @@ def main():
         print("Missing content. Set --content / --content-file / INPUT_CONTENT.")
         return 1
 
-    success = post_to_note(email, password, title, content, image_path)
+    success = post_to_note(
+        email,
+        password,
+        title,
+        content,
+        image_path,
+        eyecatch_image_url=eyecatch_image_url,
+    )
     return 0 if success else 1
 
 

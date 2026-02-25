@@ -2,6 +2,7 @@ import mimetypes
 import os
 import re
 import tempfile
+import time
 from urllib.parse import urlparse
 
 import requests
@@ -158,3 +159,92 @@ def upload_markdown_images(cookies, markdown_content):
     if unique_keys:
         print(f"本文画像キー: {unique_keys}")
     return replaced, unique_keys
+
+
+def upload_note_eyecatch(cookies, note_id, image_path):
+    """サムネイル画像を note_eyecatch エンドポイントへアップロード"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "*/*",
+        "Origin": "https://editor.note.com",
+        "Referer": "https://editor.note.com/",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    csrf_token = (
+        cookies.get("csrf_token")
+        or cookies.get("_csrf_token")
+        or cookies.get("XSRF-TOKEN")
+        or cookies.get("xsrf-token")
+    )
+    if csrf_token:
+        headers["X-CSRF-Token"] = csrf_token
+        headers["X-XSRF-TOKEN"] = csrf_token
+
+    filename = os.path.basename(image_path)
+    mime_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    file_variants = [
+        ("file", ("blob", None, mime_type)),
+        ("file", (filename, None, mime_type)),
+        ("image", ("blob", None, mime_type)),
+    ]
+
+    last_resp = None
+    for attempt in range(1, 4):
+        for file_key, file_meta in file_variants:
+            with open(image_path, "rb") as f:
+                upload_name, _, content_type = file_meta
+                files = {file_key: (upload_name, f, content_type)}
+                resp = requests.post(
+                    "https://note.com/api/v1/image_upload/note_eyecatch",
+                    cookies=cookies,
+                    headers=headers,
+                    files=files,
+                    data={"note_id": str(note_id)},
+                    timeout=60,
+                )
+            last_resp = resp
+            if resp.status_code in (200, 201):
+                try:
+                    data = resp.json().get("data", {})
+                except ValueError:
+                    data = {}
+                eyecatch_url = data.get("url")
+                print(f"サムネイル画像アップロード成功: {eyecatch_url}")
+                return eyecatch_url
+        time.sleep(1.5 * attempt)
+
+    if last_resp is not None:
+        print(f"サムネイル画像アップロード失敗: {last_resp.status_code}")
+        print(f"レスポンス本文: {last_resp.text[:500]}")
+    else:
+        print("サムネイル画像アップロード失敗: リクエスト未実行")
+    return None
+
+
+def upload_note_eyecatch_from_url(cookies, note_id, image_url):
+    """外部URLの画像をダウンロードしてサムネイル画像としてアップロード"""
+    try:
+        response = requests.get(
+            image_url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"サムネイル画像ダウンロード失敗: {image_url} ({exc})")
+        return None
+
+    ext = os.path.splitext(urlparse(image_url).path)[1]
+    if not ext:
+        content_type = response.headers.get("Content-Type", "").split(";")[0].strip()
+        ext = mimetypes.guess_extension(content_type) or ".jpg"
+
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+            tmp.write(response.content)
+            temp_path = tmp.name
+        return upload_note_eyecatch(cookies, note_id, temp_path)
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
