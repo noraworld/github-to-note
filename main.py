@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import sys
 
 from dotenv import load_dotenv
@@ -30,13 +31,48 @@ def _read_content(content_arg, content_file_arg):
     return content
 
 
+def _split_front_matter_and_body(content):
+    if not content:
+        return "", content
+    text = content.replace("\r\n", "\n")
+    if not text.startswith("---\n"):
+        return "", content
+
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        return "", content
+
+    front_matter = text[4:end]
+    body = text[end + 5 :]
+    return front_matter, body
+
+
+def _extract_title_from_front_matter(front_matter):
+    return _extract_front_matter_value(front_matter, "title")
+
+
+def _extract_front_matter_value(front_matter, key):
+    if not front_matter:
+        return None
+    for line in front_matter.splitlines():
+        m = re.match(rf"^\s*{re.escape(key)}\s*:\s*(.+?)\s*$", line)
+        if not m:
+            continue
+        value = m.group(1).strip()
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+        return value.strip() or None
+    return None
+
+
 def build_args():
     parser = argparse.ArgumentParser(
         description="Post markdown content to note.com draft."
     )
     parser.add_argument("--note-email", default=None)
     parser.add_argument("--note-password", default=None)
-    parser.add_argument("--title", default=None)
     parser.add_argument("--content", default=None)
     parser.add_argument("--content-file", default=None)
     parser.add_argument("--image-path", default=None)
@@ -51,12 +87,15 @@ def main():
     password = args.note_password or _get_input(
         "note_password", env_fallback="NOTE_PASSWORD"
     )
-    title = args.title or _get_input("title", env_fallback="NOTE_TITLE")
     content = _read_content(
         args.content or _get_input("content"),
         args.content_file or _get_input("content_file"),
     )
     image_path = args.image_path or _get_input("image_path")
+
+    front_matter, body = _split_front_matter_and_body(content)
+    title = _extract_title_from_front_matter(front_matter)
+    content = body
 
     if not email:
         print("Missing note email. Set --note-email or NOTE_EMAIL.")
@@ -65,7 +104,7 @@ def main():
         print("Missing note password. Set --note-password or NOTE_PASSWORD.")
         return 1
     if not title:
-        print("Missing title. Set --title or INPUT_TITLE.")
+        print("Missing title in YAML front matter (title: ...).")
         return 1
     if not content:
         print("Missing content. Set --content / --content-file / INPUT_CONTENT.")

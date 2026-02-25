@@ -8,14 +8,11 @@ inputs:
   note_password:
     description: "note.com login password"
     required: true
-  title:
-    description: "Article title"
-    required: true
   content:
-    description: "Markdown content string"
+    description: "Markdown content string (supports YAML front matter)"
     required: false
   content_file:
-    description: "Path to markdown file (preferred for long content)"
+    description: "Path to markdown file (preferred; title is read from YAML front matter)"
     required: false
   image_path:
     description: "Optional local image path for eyecatch upload"
