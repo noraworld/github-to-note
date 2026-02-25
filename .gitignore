@@ -1,0 +1,12 @@
+.env
+
+# Python cache / bytecode
+__pycache__/
+*.py[cod]
+
+# Local environment directories
+.venv/
+venv/
+
+# Local test artifact
+sample.jpg
