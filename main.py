@@ -1,46 +1,79 @@
+import argparse
 import os
+import sys
 
 from dotenv import load_dotenv
 
 from note_api import post_to_note
 
 
-load_dotenv()
+def _get_input(name, env_fallback=None, default=None):
+    action_key = f"INPUT_{name.upper().replace('-', '_')}"
+    value = os.getenv(action_key)
+    if value is not None and str(value).strip() != "":
+        return value
+    if env_fallback:
+        env_value = os.getenv(env_fallback)
+        if env_value is not None and str(env_value).strip() != "":
+            return env_value
+    return default
 
-EMAIL = os.getenv("NOTE_EMAIL")
-PASSWORD = os.getenv("NOTE_PASSWORD")
+
+def _read_content(content_arg, content_file_arg):
+    content = content_arg
+    content_file = content_file_arg
+    if content_file:
+        with open(content_file, "r", encoding="utf-8") as f:
+            content = f.read()
+    if (not content or str(content).strip() == "") and not sys.stdin.isatty():
+        content = sys.stdin.read()
+    return content
+
+
+def build_args():
+    parser = argparse.ArgumentParser(
+        description="Post markdown content to note.com draft."
+    )
+    parser.add_argument("--note-email", default=None)
+    parser.add_argument("--note-password", default=None)
+    parser.add_argument("--title", default=None)
+    parser.add_argument("--content", default=None)
+    parser.add_argument("--content-file", default=None)
+    parser.add_argument("--image-path", default=None)
+    return parser.parse_args()
+
+
+def main():
+    load_dotenv()
+    args = build_args()
+
+    email = args.note_email or _get_input("note_email", env_fallback="NOTE_EMAIL")
+    password = args.note_password or _get_input(
+        "note_password", env_fallback="NOTE_PASSWORD"
+    )
+    title = args.title or _get_input("title", env_fallback="NOTE_TITLE")
+    content = _read_content(
+        args.content or _get_input("content"),
+        args.content_file or _get_input("content_file"),
+    )
+    image_path = args.image_path or _get_input("image_path")
+
+    if not email:
+        print("Missing note email. Set --note-email or NOTE_EMAIL.")
+        return 1
+    if not password:
+        print("Missing note password. Set --note-password or NOTE_PASSWORD.")
+        return 1
+    if not title:
+        print("Missing title. Set --title or INPUT_TITLE.")
+        return 1
+    if not content:
+        print("Missing content. Set --content / --content-file / INPUT_CONTENT.")
+        return 1
+
+    success = post_to_note(email, password, title, content, image_path)
+    return 0 if success else 1
 
 
 if __name__ == "__main__":
-    TITLE = "朝のコーヒーを少しだけ変えてみた 2"
-    CONTENT = """
-# 朝のコーヒーを少し変えてみた話
-
-最近、朝のコーヒーの淹れ方を少しだけ変えてみました。
-といっても、豆を変えたわけでも、高級な器具を買ったわけでもありません。
-
-## 単純に、お湯の温度を少し下げてみただけです。
-
-今までは沸騰直後のお湯をそのまま使っていましたが、少しだけ待ってから淹れてみると、味がまろやかになる気がしました。気のせいかもしれません。でも、そう感じられただけでも十分です。
-
-* 朝起きたらまずカーテンを開ける
-* コーヒーはゆっくり飲む（急がない）
-* 5分だけでも机を片付ける
-* スマホを見る前に深呼吸する
-* 夜は照明を少し暗くする
-* 「まあいっか」を1回は使う
-
-### 朝の時間は、ほんの少しの変化で印象が変わります。
-
-同じ豆、同じカップ、同じ部屋なのに、不思議なものです。
-
-[Google](https://www.google.com)
-
-![random image](https://fastly.picsum.photos/id/223/200/300.jpg?hmac=IZftr2PJy4auHpfBpLuMtFhsxgQYlUgXdV5rFwjGItQ)
-
-こういう小さな実験を、**これから** もたまにやってみようと思います。
-
-![random image 2](https://fastly.picsum.photos/id/361/200/300.jpg?hmac=unS_7uvpA3Q-hJTvI1xNCnlhta-oC6XnWZ4Y11UpjAo)
-    """
-
-    post_to_note(EMAIL, PASSWORD, TITLE, CONTENT, None)
+    sys.exit(main())

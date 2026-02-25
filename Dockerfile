@@ -12,9 +12,9 @@ WORKDIR /app
 RUN pip install --no-cache-dir selenium requests python-dotenv
 
 COPY note_api /app/note_api
-COPY action_entrypoint.py /app/action_entrypoint.py
+COPY main.py /app/main.py
 
 ENV CHROME_BINARY=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
-ENTRYPOINT ["python", "/app/action_entrypoint.py"]
+ENTRYPOINT ["python", "/app/main.py"]
