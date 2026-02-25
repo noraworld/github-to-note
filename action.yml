@@ -1,0 +1,30 @@
+name: "Post to note.com"
+description: "Post markdown content to note.com draft using Selenium login and Note API"
+
+inputs:
+  note_email:
+    description: "note.com login email"
+    required: true
+  note_password:
+    description: "note.com login password"
+    required: true
+  title:
+    description: "Article title"
+    required: true
+  content:
+    description: "Markdown content string"
+    required: false
+  content_file:
+    description: "Path to markdown file (preferred for long content)"
+    required: false
+  image_path:
+    description: "Optional local image path for eyecatch upload"
+    required: false
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+
+branding:
+  icon: "edit-3"
+  color: "blue"

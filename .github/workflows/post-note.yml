@@ -1,0 +1,28 @@
+name: Post to note
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: Article title
+        required: true
+        type: string
+      content:
+        description: Markdown content
+        required: true
+        type: string
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Post to note
+        uses: ./
+        with:
+          note_email: ${{ secrets.NOTE_EMAIL }}
+          note_password: ${{ secrets.NOTE_PASSWORD }}
+          title: ${{ github.event.inputs.title }}
+          content: ${{ github.event.inputs.content }}

@@ -1,3 +1,4 @@
+import os
 import time
 
 from selenium import webdriver
@@ -7,9 +8,28 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
+def _build_driver():
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1280,720")
+
+    chrome_binary = os.getenv("CHROME_BINARY")
+    if chrome_binary:
+        options.binary_location = chrome_binary
+
+    chromedriver_path = os.getenv("CHROMEDRIVER_PATH")
+    if chromedriver_path:
+        service = webdriver.ChromeService(executable_path=chromedriver_path)
+        return webdriver.Chrome(service=service, options=options)
+
+    return webdriver.Chrome(options=options)
+
+
 def get_note_cookies(email, password):
     """noteにログインしてCookieを取得"""
-    driver = webdriver.Chrome()
+    driver = _build_driver()
 
     try:
         driver.get("https://note.com/login")
