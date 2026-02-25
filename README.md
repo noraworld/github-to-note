@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Post to note
-        uses: YOUR_ORG_OR_USER/note-api-sample@main
+        uses: noraworld/github-to-note@main
         with:
           note_email: ${{ secrets.NOTE_EMAIL }}
           note_password: ${{ secrets.NOTE_PASSWORD }}
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Post to note
-        uses: YOUR_ORG_OR_USER/note-api-sample@main
+        uses: noraworld/github-to-note@main
         with:
           note_email: ${{ secrets.NOTE_EMAIL }}
           note_password: ${{ secrets.NOTE_PASSWORD }}
@@ -74,3 +74,55 @@ jobs:
 
 - `NOTE_EMAIL`
 - `NOTE_PASSWORD`
+
+## Local Development
+
+### 1. Install dependencies
+
+```bash
+pipenv install
+```
+
+### 2. Prepare environment variables
+
+Create `.env` in the repository root:
+
+```env
+NOTE_EMAIL=your-note-email@example.com
+NOTE_PASSWORD=your-note-password
+```
+
+### 3. Run locally
+
+Use `pipenv run` with CLI options:
+
+```bash
+pipenv run python main.py \
+  --title "My Article Title" \
+  --content-file ./content/weekly-update.md
+```
+
+You can also pass markdown directly:
+
+```bash
+pipenv run python main.py \
+  --title "My Article Title" \
+  --content "# Hello from local run"
+```
+
+### 4. Optional: pass content via stdin
+
+```bash
+cat ./content/weekly-update.md | pipenv run python main.py --title "From stdin"
+```
+
+## CLI Options (`main.py`)
+
+- `--note-email`: note.com login email (falls back to `NOTE_EMAIL` or `INPUT_NOTE_EMAIL`)
+- `--note-password`: note.com login password (falls back to `NOTE_PASSWORD` or `INPUT_NOTE_PASSWORD`)
+- `--title`: article title (falls back to `NOTE_TITLE` or `INPUT_TITLE`)
+- `--content`: markdown content string (falls back to `INPUT_CONTENT`)
+- `--content-file`: path to markdown file (falls back to `INPUT_CONTENT_FILE`)
+- `--image-path`: optional local image path for eyecatch (falls back to `INPUT_IMAGE_PATH`)
+
+Note: You must provide content via `--content`, `--content-file`, or stdin.
