@@ -7,6 +7,9 @@ def post_to_note(email, password, title, markdown_content, image_path=None):
     """noteに記事を投稿するメインフロー"""
     print("1. noteにログイン中...")
     cookies = get_note_cookies(email, password)
+    if not cookies:
+        print("ログインに失敗したため処理を中断します。")
+        return False
 
     print("2. 本文中の画像をアップロード中...")
     processed_markdown, embedded_image_keys = upload_markdown_images(cookies, markdown_content)

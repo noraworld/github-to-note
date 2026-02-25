@@ -26,6 +26,10 @@ def create_article(cookies, title, markdown_content):
         payload = result.get("data", {})
         article_id = payload.get("id")
         article_key = payload.get("key")
+        if not article_id or not article_key:
+            print("記事作成失敗: レスポンスに記事ID/KEYがありません")
+            print(f"レスポンス本文: {response.text[:500]}")
+            return None, None
         print(f"記事作成成功！ID: {article_id}")
         print(f"記事作成レスポンス data keys: {list(payload.keys())}")
         return article_id, article_key

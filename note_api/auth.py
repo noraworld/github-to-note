@@ -14,6 +14,14 @@ def _build_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1280,720")
+    options.add_argument("--lang=ja-JP")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument(
+        "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    )
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
 
     chrome_binary = os.getenv("CHROME_BINARY")
     if chrome_binary:
@@ -113,6 +121,14 @@ def get_note_cookies(email, password):
 
     except (TimeoutException, NoSuchElementException) as exc:
         print(f"ログイン処理で要素取得に失敗しました: {exc}")
+        print(f"current_url={driver.current_url}")
+        print(f"title={driver.title}")
+        try:
+            screenshot_path = "/tmp/note-login-failed.png"
+            driver.save_screenshot(screenshot_path)
+            print(f"screenshot={screenshot_path}")
+        except Exception:
+            pass
         return {}
     finally:
         driver.quit()
