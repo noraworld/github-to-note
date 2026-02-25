@@ -60,7 +60,7 @@ jobs:
         with:
           note_email: ${{ secrets.NOTE_EMAIL }}
           note_password: ${{ secrets.NOTE_PASSWORD }}
-          content_file: ./content/weekly-update.md
+          content_file: ./sample.md
 ```
 
 ## Required secrets (in the calling repository)
@@ -91,7 +91,7 @@ Use `pipenv run` with CLI options:
 
 ```bash
 pipenv run python main.py \
-  --content-file ./content/weekly-update.md
+  --content-file ./sample.md
 ```
 
 You can also pass markdown directly:
@@ -103,7 +103,7 @@ pipenv run python main.py --content $'---\ntitle: \"Hello\"\n---\n# Body'
 ### 4. Optional: pass content via stdin
 
 ```bash
-cat ./content/weekly-update.md | pipenv run python main.py
+cat ./sample.md | pipenv run python main.py
 ```
 
 ## CLI Options (`main.py`)
