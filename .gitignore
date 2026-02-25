@@ -7,6 +7,3 @@ __pycache__/
 # Local environment directories
 .venv/
 venv/
-
-# Local test artifact
-sample.md
