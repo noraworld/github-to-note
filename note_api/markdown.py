@@ -77,8 +77,43 @@ def markdown_to_html(markdown_text):
 
     def flush_list():
         if list_items:
-            items_html = "".join(f"<li>{inline_format(item)}</li>" for item in list_items)
-            blocks.append(f"<ul>{items_html}</ul>")
+            parts = []
+            current_depth = 0
+            list_stack = []
+
+            for depth, list_type, item in list_items:
+                # note supports up to 5 nested levels for lists.
+                target_depth = max(1, min(depth, 5))
+                if target_depth > current_depth + 1:
+                    target_depth = current_depth + 1
+
+                while current_depth > target_depth:
+                    parts.append(f"</li></{list_stack.pop()}>")
+                    current_depth -= 1
+
+                if current_depth == target_depth and current_depth > 0:
+                    if list_stack[-1] == list_type:
+                        parts.append("</li>")
+                    else:
+                        parts.append(f"</li></{list_stack.pop()}>")
+                        current_depth -= 1
+
+                while current_depth < target_depth:
+                    open_tag = list_type if current_depth + 1 == target_depth else "ul"
+                    parts.append(f"<{open_tag}>")
+                    list_stack.append(open_tag)
+                    current_depth += 1
+
+                bid = block_id()
+                parts.append(
+                    f'<li><p name="{bid}" id="{bid}">{inline_format(item)}</p>'
+                )
+
+            while current_depth > 0:
+                parts.append(f"</li></{list_stack.pop()}>")
+                current_depth -= 1
+
+            blocks.append("".join(parts))
             list_items.clear()
 
     def flush_quote():
@@ -157,10 +192,20 @@ def markdown_to_html(markdown_text):
             blocks.append(f'<h{level} name="{bid}" id="{bid}">{content}</h{level}>')
             continue
 
-        bullet_match = re.match(r"^[-*]\s+(.+)$", line)
+        bullet_match = re.match(r"^(\s*)[-*]\s+(.+)$", line)
         if bullet_match:
             flush_paragraph()
-            list_items.append(bullet_match.group(1).strip())
+            indent_width = len(bullet_match.group(1).expandtabs(4))
+            depth = (indent_width // 2) + 1
+            list_items.append((depth, "ul", bullet_match.group(2).strip()))
+            continue
+
+        numbered_match = re.match(r"^(\s*)\d+[.)]\s+(.+)$", line)
+        if numbered_match:
+            flush_paragraph()
+            indent_width = len(numbered_match.group(1).expandtabs(4))
+            depth = (indent_width // 2) + 1
+            list_items.append((depth, "ol", numbered_match.group(2).strip()))
             continue
 
         flush_list()
@@ -182,6 +227,7 @@ def markdown_body_length(markdown_text):
     text = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r"\1", text)
     text = re.sub(r"^\s*#{1,6}\s*", "", text, flags=re.MULTILINE)
     text = re.sub(r"^\s*[-*]\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s*\d+[.)]\s+", "", text, flags=re.MULTILINE)
     text = text.replace("**", "").replace("*", "").replace("`", "")
     compact = re.sub(r"\s+", "", text)
     return len(compact)
