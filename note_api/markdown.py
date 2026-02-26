@@ -31,16 +31,14 @@ def markdown_to_html(markdown_text):
             label = match.group(1).strip()
             url = escape(match.group(2).strip(), quote=True)
             label = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", escape(label))
-            label = re.sub(r"\*([^*]+)\*", r"<i>\1</i>", label)
-            label = re.sub(r"_([^_]+)_", r"<i>\1</i>", label)
+            label = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", label)
             return f'<a href="{url}" target="_blank" rel="noopener noreferrer">{label}</a>'
 
         s = re.sub(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)", replace_image, s)
         s = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", replace_link, s)
         s = re.sub(r"~~(.+?)~~", r"<s>\1</s>", s)
         s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
-        s = re.sub(r"\*([^*]+)\*", r"<i>\1</i>", s)
-        s = re.sub(r"_([^_]+)_", r"<i>\1</i>", s)
+        s = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", s)
 
         for i, code_html in enumerate(code_spans):
             s = s.replace(f"__CODE_SPAN_{i}__", code_html)
