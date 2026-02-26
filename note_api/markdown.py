@@ -63,6 +63,7 @@ def markdown_to_html(markdown_text):
     blocks = []
     paragraph_lines = []
     list_items = []
+    quote_lines = []
     in_code = False
     code_lines = []
 
@@ -79,6 +80,15 @@ def markdown_to_html(markdown_text):
             blocks.append(f"<ul>{items_html}</ul>")
             list_items.clear()
 
+    def flush_quote():
+        if quote_lines:
+            quote = "<br>".join(inline_format(line) for line in quote_lines)
+            bid = block_id()
+            blocks.append(
+                f'<blockquote><p name="{bid}" id="{bid}">{quote}</p></blockquote>'
+            )
+            quote_lines.clear()
+
     def flush_code():
         if code_lines:
             code = "\n".join(escape(line) for line in code_lines)
@@ -91,6 +101,7 @@ def markdown_to_html(markdown_text):
         if line.strip().startswith("```"):
             flush_paragraph()
             flush_list()
+            flush_quote()
             if in_code:
                 flush_code()
                 in_code = False
@@ -105,14 +116,24 @@ def markdown_to_html(markdown_text):
         if not line.strip():
             flush_paragraph()
             flush_list()
+            flush_quote()
             continue
 
         img_block = image_block(line)
         if img_block is not None:
             flush_paragraph()
             flush_list()
+            flush_quote()
             blocks.append(img_block)
             continue
+
+        quote_match = re.match(r"^>\s?(.*)$", line)
+        if quote_match:
+            flush_paragraph()
+            flush_list()
+            quote_lines.append(quote_match.group(1))
+            continue
+        flush_quote()
 
         heading_match = re.match(r"^(#{1,6})\s+(.+)$", line)
         if heading_match:
@@ -141,6 +162,7 @@ def markdown_to_html(markdown_text):
         flush_code()
     flush_paragraph()
     flush_list()
+    flush_quote()
 
     return "\n".join(blocks)
 
