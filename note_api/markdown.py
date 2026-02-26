@@ -16,7 +16,10 @@ def markdown_to_html(markdown_text):
         code_spans = []
 
         def protect_code(match):
-            code_spans.append(f"<code>{escape(match.group(1))}</code>")
+            # note editor compatibility: inline code is more stable with explicit class/contenteditable
+            code_spans.append(
+                f'<code class="inline-code" contenteditable="false">{escape(match.group(1))}</code>'
+            )
             return f"__CODE_SPAN_{len(code_spans) - 1}__"
 
         s = re.sub(r"`([^`]+)`", protect_code, s)
