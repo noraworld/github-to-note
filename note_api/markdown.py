@@ -114,11 +114,15 @@ def markdown_to_html(markdown_text):
             blocks.append(img_block)
             continue
 
-        heading_match = re.match(r"^(#{1,3})\s+(.+)$", line)
+        heading_match = re.match(r"^(#{1,6})\s+(.+)$", line)
         if heading_match:
             flush_paragraph()
             flush_list()
-            level = len(heading_match.group(1))
+            hash_count = len(heading_match.group(1))
+            if hash_count <= 2:
+                level = 2
+            else:
+                level = 3
             content = inline_format(heading_match.group(2).strip())
             bid = block_id()
             blocks.append(f'<h{level} name="{bid}" id="{bid}">{content}</h{level}>')
