@@ -36,6 +36,7 @@ def markdown_to_html(markdown_text):
 
         s = re.sub(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)", replace_image, s)
         s = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", replace_link, s)
+        s = re.sub(r"~~(.+?)~~", r"<s>\1</s>", s)
         s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
         s = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", s)
 
