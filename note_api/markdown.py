@@ -13,13 +13,8 @@ def markdown_to_html(markdown_text):
         return str(uuid.uuid4())
 
     def inline_format(s):
-        code_spans = []
-
-        def protect_code(match):
-            code_spans.append(f"<code>{escape(match.group(1))}</code>")
-            return f"__CODE_SPAN_{len(code_spans) - 1}__"
-
-        s = re.sub(r"`([^`]+)`", protect_code, s)
+        # note does not support inline code spans; keep them as plain text.
+        s = re.sub(r"`([^`]+)`", r"\1", s)
         s = escape(s)
 
         def replace_image(match):
@@ -39,9 +34,6 @@ def markdown_to_html(markdown_text):
         s = re.sub(r"~~(.+?)~~", r"<s>\1</s>", s)
         s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
         s = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", s)
-
-        for i, code_html in enumerate(code_spans):
-            s = s.replace(f"__CODE_SPAN_{i}__", code_html)
 
         return s
 
