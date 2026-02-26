@@ -127,6 +127,13 @@ def markdown_to_html(markdown_text):
             blocks.append(img_block)
             continue
 
+        if re.match(r"^\s*---\s*$", line):
+            flush_paragraph()
+            flush_list()
+            flush_quote()
+            blocks.append("<hr>")
+            continue
+
         quote_match = re.match(r"^>\s?(.*)$", line)
         if quote_match:
             flush_paragraph()
