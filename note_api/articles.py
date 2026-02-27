@@ -39,6 +39,35 @@ def create_article(cookies, title, markdown_content):
     return None, None
 
 
+def update_existing_article(cookies, article_id, title, markdown_content):
+    """既存記事の存在確認のみ行い、本文更新は draft_save 側で実施"""
+    headers = build_note_api_headers(cookies)
+    response = requests.get(
+        f"https://note.com/api/v1/text_notes/{article_id}",
+        cookies=cookies,
+        headers=headers,
+    )
+
+    if response.status_code == 404:
+        print(f"既存記事の取得失敗: {response.status_code}")
+        print(f"レスポンス本文: {response.text[:500]}")
+        print("article_id が存在しないため更新を中断します。")
+        return None, None, False
+
+    if response.status_code == 405:
+        print("既存記事の事前確認は 405 のためスキップします。draft_save で更新します。")
+        return article_id, None, False
+
+    if response.status_code not in (200, 201):
+        print(f"既存記事の確認に失敗: {response.status_code}")
+        print(f"レスポンス本文: {response.text[:500]}")
+        print("article_id の確認ができないため更新を中断します。")
+        return None, None, False
+
+    print("既存記事の確認成功。draft_save で更新します。")
+    return article_id, None, False
+
+
 def update_article_draft(
     cookies,
     article_id,
@@ -99,6 +128,20 @@ def update_article_draft(
         )
         last_response = response
         if response.status_code in (200, 201):
+            try:
+                resp_json = response.json()
+            except Exception:
+                resp_json = {}
+
+            error = resp_json.get("error") if isinstance(resp_json, dict) else None
+            if error:
+                code = error.get("code", "unknown")
+                message = error.get("message", "")
+                if code == "invalid" and "cannot edit others draft" in message:
+                    print("記事の更新失敗: 指定した article_id は編集できません（存在しないか、権限がありません）。")
+                else:
+                    print(f"記事の更新失敗: APIエラー code={code}, message={message}")
+                return False
             print(f"記事の下書き保存成功！(POST draft_save / pattern {idx})")
             return True
 

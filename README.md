@@ -36,6 +36,7 @@ jobs:
 - `content` (optional): markdown content string
 - `content_file` (optional): path to markdown file
 - `image_path` (optional): local image path for eyecatch upload
+- `article_id` (optional): existing note article ID to update (if omitted, creates a new article)
 
 Note: You must provide either `content` or `content_file`, and include `title` in YAML front matter.
 
@@ -61,6 +62,7 @@ jobs:
           note_email: ${{ secrets.NOTE_EMAIL }}
           note_password: ${{ secrets.NOTE_PASSWORD }}
           content_file: ./sample.md
+          # article_id: 148375502
 ```
 
 ## Required secrets (in the calling repository)
@@ -102,6 +104,14 @@ pipenv run python main.py \
   --content-file ./sample.md
 ```
 
+Update an existing article:
+
+```bash
+pipenv run python main.py \
+  --content-file ./sample.md \
+  --article-id 148375502
+```
+
 Show the browser (disable headless) for login debugging:
 
 ```bash
@@ -129,6 +139,7 @@ cat ./sample.md | pipenv run python main.py
 - `--content`: markdown content string (falls back to `INPUT_CONTENT`)
 - `--content-file`: path to markdown file (falls back to `INPUT_CONTENT_FILE`)
 - `--image-path`: optional local image path for eyecatch (falls back to `INPUT_IMAGE_PATH`)
+- `--article-id`: existing note article ID to update (falls back to `INPUT_ARTICLE_ID`)
 - `--show-browser`: launch Chrome with UI for login debugging (equivalent to `NOTE_SHOW_BROWSER=1`)
 
 Note: You must provide content via `--content`, `--content-file`, or stdin, and include YAML front matter with `title`.

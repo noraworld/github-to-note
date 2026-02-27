@@ -17,6 +17,9 @@ inputs:
   image_path:
     description: "Optional local image path for eyecatch upload"
     required: false
+  article_id:
+    description: "Optional note article ID. If set, update the existing article instead of creating a new one"
+    required: false
 
 runs:
   using: "docker"

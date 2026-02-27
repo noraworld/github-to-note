@@ -76,6 +76,7 @@ def build_args():
     parser.add_argument("--content", default=None)
     parser.add_argument("--content-file", default=None)
     parser.add_argument("--image-path", default=None)
+    parser.add_argument("--article-id", default=None)
     parser.add_argument("--show-browser", action="store_true")
     return parser.parse_args()
 
@@ -93,6 +94,7 @@ def main():
         args.content_file or _get_input("content_file"),
     )
     image_path = args.image_path or _get_input("image_path")
+    article_id = args.article_id or _get_input("article_id")
     if args.show_browser:
         os.environ["NOTE_SHOW_BROWSER"] = "1"
 
@@ -121,6 +123,7 @@ def main():
         content,
         image_path,
         eyecatch_image_url=eyecatch_image_url,
+        article_id=article_id,
     )
     return 0 if success else 1
 

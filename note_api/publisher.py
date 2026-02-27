@@ -1,4 +1,4 @@
-from .articles import create_article, update_article_draft
+from .articles import create_article, update_article_draft, update_existing_article
 from .auth import get_note_cookies
 from .images import upload_markdown_images, upload_note_eyecatch_from_url
 
@@ -10,6 +10,7 @@ def post_to_note(
     markdown_content,
     image_path=None,
     eyecatch_image_url=None,
+    article_id=None,
 ):
     """noteに記事を投稿するメインフロー"""
     print("1. noteにログイン中...")
@@ -21,8 +22,14 @@ def post_to_note(
     print("2. 本文中の画像をアップロード中...")
     processed_markdown, embedded_image_keys = upload_markdown_images(cookies, markdown_content)
 
-    print("3. 記事を作成中...")
-    article_id, article_key = create_article(cookies, title, processed_markdown)
+    if article_id:
+        print(f"3. 既存記事を更新中... (ID: {article_id})")
+        article_id, article_key, _ = update_existing_article(
+            cookies, article_id, title, processed_markdown
+        )
+    else:
+        print("3. 記事を作成中...")
+        article_id, article_key = create_article(cookies, title, processed_markdown)
     if not article_id:
         return False
 
@@ -49,5 +56,6 @@ def post_to_note(
         upload_note_eyecatch_from_url(cookies, article_id, eyecatch_image_url)
 
     print("\n✅ 投稿完了！")
-    print(f"記事URL: https://note.com/your_username/n/{article_key}")
+    if article_key:
+        print(f"記事URL: https://note.com/your_username/n/{article_key}")
     return True
