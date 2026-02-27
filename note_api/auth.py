@@ -8,6 +8,46 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
+def _parse_cookie_header(cookie_header):
+    cookies = {}
+    if not cookie_header:
+        return cookies
+    for part in str(cookie_header).split(";"):
+        token = part.strip()
+        if not token or "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if key:
+            cookies[key] = value
+    return cookies
+
+
+def _get_cookie_fallback_from_env():
+    cookies = {}
+
+    cookie_header = os.getenv("NOTE_COOKIE") or os.getenv("NOTE_COOKIES")
+    cookies.update(_parse_cookie_header(cookie_header))
+
+    note_session_v5 = os.getenv("NOTE_SESSION_V5")
+    xsrf_token = os.getenv("XSRF_TOKEN")
+    csrf_token = os.getenv("CSRF_TOKEN")
+
+    if note_session_v5:
+        cookies["_note_session_v5"] = note_session_v5
+    if xsrf_token:
+        cookies["XSRF-TOKEN"] = xsrf_token
+    if csrf_token:
+        cookies["csrf_token"] = csrf_token
+
+    return cookies
+
+
+def _has_auth_cookie(cookies):
+    return bool(cookies.get("_note_session_v5"))
+
+
 def _is_truthy_env(name):
     value = os.getenv(name)
     if value is None:
@@ -48,6 +88,7 @@ def get_note_cookies(email, password):
     if _is_truthy_env("NOTE_SHOW_BROWSER"):
         print("NOTE_SHOW_BROWSER=1 のためヘッドレスを無効化して起動します。")
     driver = _build_driver()
+    login_error = None
 
     try:
         driver.get("https://note.com/login")
@@ -127,10 +168,14 @@ def get_note_cookies(email, password):
         time.sleep(2)
 
         cookies = driver.get_cookies()
-        return {cookie["name"]: cookie["value"] for cookie in cookies}
+        cookie_map = {cookie["name"]: cookie["value"] for cookie in cookies}
+        if _has_auth_cookie(cookie_map):
+            return cookie_map
+        login_error = "ログイン後Cookieに _note_session_v5 が含まれていません。"
 
     except (TimeoutException, NoSuchElementException) as exc:
-        print(f"ログイン処理で要素取得に失敗しました: {exc}")
+        login_error = f"ログイン処理で要素取得に失敗しました: {exc}"
+        print(login_error)
         print(f"current_url={driver.current_url}")
         print(f"title={driver.title}")
         try:
@@ -139,6 +184,13 @@ def get_note_cookies(email, password):
             print(f"screenshot={screenshot_path}")
         except Exception:
             pass
-        return {}
     finally:
         driver.quit()
+
+    fallback_cookies = _get_cookie_fallback_from_env()
+    if _has_auth_cookie(fallback_cookies):
+        print("ID/パスワードログインに失敗。環境変数のセッション情報で継続します。")
+        return fallback_cookies
+
+    print("セッション情報のフォールバックも見つからないためログイン失敗です。")
+    return {}

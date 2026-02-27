@@ -83,6 +83,14 @@ Create `.env` in the repository root:
 ```env
 NOTE_EMAIL=your-note-email@example.com
 NOTE_PASSWORD=your-note-password
+# Optional fallback session cookies (used only if login fails)
+# NOTE_COOKIE can contain full cookie header string: key1=value1; key2=value2
+NOTE_COOKIE=
+# Or set key cookies individually:
+NOTE_SESSION_V5=
+XSRF_TOKEN=
+# Optional helper cookie (not always present; keep empty if unavailable)
+CSRF_TOKEN=
 ```
 
 ### 3. Run locally
