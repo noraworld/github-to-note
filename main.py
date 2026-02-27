@@ -76,6 +76,7 @@ def build_args():
     parser.add_argument("--content", default=None)
     parser.add_argument("--content-file", default=None)
     parser.add_argument("--image-path", default=None)
+    parser.add_argument("--show-browser", action="store_true")
     return parser.parse_args()
 
 
@@ -92,6 +93,8 @@ def main():
         args.content_file or _get_input("content_file"),
     )
     image_path = args.image_path or _get_input("image_path")
+    if args.show_browser:
+        os.environ["NOTE_SHOW_BROWSER"] = "1"
 
     front_matter, body = _split_front_matter_and_body(content)
     title = _extract_title_from_front_matter(front_matter)

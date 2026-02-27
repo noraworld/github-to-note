@@ -8,9 +8,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
+def _is_truthy_env(name):
+    value = os.getenv(name)
+    if value is None:
+        return False
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
+
+
 def _build_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
+    if not _is_truthy_env("NOTE_SHOW_BROWSER"):
+        options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1280,720")
@@ -37,6 +45,8 @@ def _build_driver():
 
 def get_note_cookies(email, password):
     """noteにログインしてCookieを取得"""
+    if _is_truthy_env("NOTE_SHOW_BROWSER"):
+        print("NOTE_SHOW_BROWSER=1 のためヘッドレスを無効化して起動します。")
     driver = _build_driver()
 
     try:

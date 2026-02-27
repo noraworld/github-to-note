@@ -94,6 +94,14 @@ pipenv run python main.py \
   --content-file ./sample.md
 ```
 
+Show the browser (disable headless) for login debugging:
+
+```bash
+pipenv run python main.py \
+  --content-file ./sample.md \
+  --show-browser
+```
+
 You can also pass markdown directly:
 
 ```bash
@@ -113,5 +121,6 @@ cat ./sample.md | pipenv run python main.py
 - `--content`: markdown content string (falls back to `INPUT_CONTENT`)
 - `--content-file`: path to markdown file (falls back to `INPUT_CONTENT_FILE`)
 - `--image-path`: optional local image path for eyecatch (falls back to `INPUT_IMAGE_PATH`)
+- `--show-browser`: launch Chrome with UI for login debugging (equivalent to `NOTE_SHOW_BROWSER=1`)
 
 Note: You must provide content via `--content`, `--content-file`, or stdin, and include YAML front matter with `title`.
