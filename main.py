@@ -99,8 +99,18 @@ def _extract_front_matter_string_list(front_matter, key):
         if not m:
             continue
         rest = m.group(1).strip()
-        if rest.startswith("[") and rest.endswith("]"):
-            inner = rest[1:-1].strip()
+        if rest.startswith("["):
+            flow_text = rest
+            if not rest.endswith("]"):
+                for sub in lines[idx + 1 :]:
+                    flow_text += " " + sub.strip()
+                    if "]" in sub:
+                        break
+            start = flow_text.find("[")
+            end = flow_text.rfind("]")
+            if start == -1 or end == -1 or end <= start:
+                return []
+            inner = flow_text[start + 1 : end].strip()
             if not inner:
                 return []
             parts = re.findall(r'''(?:'[^']*'|"[^"]*"|[^,]+)''', inner)
