@@ -221,3 +221,12 @@ Note: You must provide content via `--content`, `--content-file`, or stdin, and 
 - `note_id`: optional existing note article ID for update mode
 - `published`: optional boolean (`true` to publish; otherwise draft)
 - `tags`: optional string array, converted to note hashtags (e.g. `["foo", "bar"]` -> `["#foo", "#bar"]`)
+
+## Disclaimer (Unofficial API)
+
+This project uses note.com unofficial/private APIs.
+
+- API specifications may change without notice, and this action may stop working at any time.
+- Use this project responsibly and within reasonable limits (for example: avoid excessive request load, avoid spam posting).
+- The developer is not responsible for any direct or indirect damages caused by using this code.
+- You are responsible for complying with note.com Terms of Service and related rules when operating this project.
