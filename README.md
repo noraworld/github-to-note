@@ -219,8 +219,25 @@ Note: You must provide content via `--content`, `--content-file`, or stdin, and 
 
 - `title`: required article title
 - `note_id`: optional existing note article ID for update mode
+- `image`: optional eyecatch/thumbnail image URL
 - `published`: optional boolean (`true` to publish; otherwise draft)
 - `tags`: optional string array, converted to note hashtags (e.g. `["foo", "bar"]` -> `["#foo", "#bar"]`)
+
+### Example `content_file`
+
+```markdown
+---
+title: "Weekly update"
+note_id: 148375502
+image: "https://example.com/eyecatch.jpg"
+published: true
+tags: ["foo", "bar"]
+---
+
+# Weekly update
+
+This is just a weekly note.
+```
 
 ## Disclaimer (Unofficial API)
 
