@@ -72,6 +72,43 @@ jobs:
           # article_id: 148375502
 ```
 
+## Example: Commit `note_id` Back in Caller Workflow
+
+When `write_note_id: "true"` is enabled, the file is modified in the runner workspace.
+To persist the updated `note_id`, commit and push in the caller workflow:
+
+```yaml
+name: Post to note and commit note_id
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Post to note
+        uses: noraworld/github-to-note@main
+        with:
+          note_email: ${{ secrets.NOTE_EMAIL }}
+          note_password: ${{ secrets.NOTE_PASSWORD }}
+          content_file: ./sample.md
+          write_note_id: "true"
+
+      - name: Commit updated note_id
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ./sample.md
+          git diff --cached --quiet || git commit -m "chore: write note_id"
+          git push
+```
+
 ## Required secrets (in the calling repository)
 
 - `NOTE_EMAIL`
