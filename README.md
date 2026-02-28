@@ -38,10 +38,12 @@ jobs:
 - `image_path` (optional): local image path for eyecatch upload
 - `article_id` (optional): existing note article ID to update (overrides YAML `note_id`)
 - `write_note_id` (optional): if truthy, writes generated `note_id` back to `content_file` on successful new post
+- `publish` (optional): if truthy, publish article instead of saving draft
 
 Note: You must provide either `content` or `content_file`, and include `title` in YAML front matter.
 If either `article_id` input/option or YAML `note_id` exists, the action updates that article; if neither exists, it creates a new article.
 If `write_note_id` is enabled, `note_id` is written only when a new article is created successfully.
+Publish mode is enabled when either action/CLI `publish` is true or YAML front matter has `published: true`; otherwise draft mode is used.
 
 ## Example with `content_file`
 
@@ -66,6 +68,7 @@ jobs:
           note_password: ${{ secrets.NOTE_PASSWORD }}
           content_file: ./sample.md
           write_note_id: "true"
+          # publish: "true"
           # article_id: 148375502
 ```
 
@@ -125,6 +128,14 @@ note_id: 148375502
 ---
 ```
 
+Publish by CLI option:
+
+```bash
+pipenv run python main.py \
+  --content-file ./sample.md \
+  --publish
+```
+
 Show the browser (disable headless) for login debugging:
 
 ```bash
@@ -162,6 +173,14 @@ cat ./sample.md | pipenv run python main.py
 - `--image-path`: optional local image path for eyecatch (falls back to `INPUT_IMAGE_PATH`)
 - `--article-id`: existing note article ID to update (falls back to `INPUT_ARTICLE_ID`; overrides YAML `note_id`)
 - `--write-note-id`: write generated `note_id` back to `--content-file` on successful new post (falls back to `INPUT_WRITE_NOTE_ID`)
+- `--publish`: publish article instead of saving draft (falls back to `INPUT_PUBLISH`; YAML `published: true` also enables publish)
 - `--show-browser`: launch Chrome with UI for login debugging (equivalent to `NOTE_SHOW_BROWSER=1`)
 
 Note: You must provide content via `--content`, `--content-file`, or stdin, and include YAML front matter with `title`.
+
+## YAML Front Matter Fields
+
+- `title`: required article title
+- `note_id`: optional existing note article ID for update mode
+- `published`: optional boolean (`true` to publish; otherwise draft)
+- `tags`: optional string array, converted to note hashtags (e.g. `["foo", "bar"]` -> `["#foo", "#bar"]`)

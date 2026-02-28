@@ -73,6 +73,59 @@ def _extract_front_matter_value(front_matter, key):
     return None
 
 
+def _extract_front_matter_bool(front_matter, key):
+    value = _extract_front_matter_value(front_matter, key)
+    return _is_truthy(value)
+
+
+def _strip_quotes(text):
+    value = (text or "").strip()
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        return value[1:-1].strip()
+    return value
+
+
+def _extract_front_matter_string_list(front_matter, key):
+    if not front_matter:
+        return []
+    lines = front_matter.splitlines()
+    key_pattern = re.compile(rf"^\s*{re.escape(key)}\s*:\s*(.*)$")
+    top_level_key_pattern = re.compile(r"^[A-Za-z0-9_-]+\s*:")
+
+    for idx, line in enumerate(lines):
+        m = key_pattern.match(line)
+        if not m:
+            continue
+        rest = m.group(1).strip()
+        if rest.startswith("[") and rest.endswith("]"):
+            inner = rest[1:-1].strip()
+            if not inner:
+                return []
+            parts = re.findall(r'''(?:'[^']*'|"[^"]*"|[^,]+)''', inner)
+            return [_strip_quotes(p) for p in parts if _strip_quotes(p)]
+        if rest:
+            value = _strip_quotes(rest)
+            return [value] if value else []
+
+        items = []
+        for sub in lines[idx + 1 :]:
+            if not sub.strip():
+                continue
+            if top_level_key_pattern.match(sub.strip()):
+                break
+            item_match = re.match(r"^\s*-\s*(.+?)\s*$", sub)
+            if item_match:
+                value = _strip_quotes(item_match.group(1))
+                if value:
+                    items.append(value)
+            elif items:
+                break
+        return items
+    return []
+
+
 def _upsert_note_id_to_content_file(content_file, note_id):
     try:
         with open(content_file, "r", encoding="utf-8") as f:
@@ -124,6 +177,7 @@ def build_args():
     parser.add_argument("--image-path", default=None)
     parser.add_argument("--article-id", default=None)
     parser.add_argument("--write-note-id", action="store_true")
+    parser.add_argument("--publish", action="store_true")
     parser.add_argument("--show-browser", action="store_true")
     return parser.parse_args()
 
@@ -142,6 +196,7 @@ def main():
     image_path = args.image_path or _get_input("image_path")
     article_id = args.article_id or _get_input("article_id")
     write_note_id = args.write_note_id or _is_truthy(_get_input("write_note_id"))
+    publish_input = _is_truthy(_get_input("publish"))
     if args.show_browser:
         os.environ["NOTE_SHOW_BROWSER"] = "1"
 
@@ -149,6 +204,17 @@ def main():
     title = _extract_title_from_front_matter(front_matter)
     eyecatch_image_url = _extract_front_matter_value(front_matter, "image")
     front_matter_note_id = _extract_front_matter_value(front_matter, "note_id")
+    front_matter_published = _extract_front_matter_bool(front_matter, "published")
+    hashtags = []
+    for tag in _extract_front_matter_string_list(front_matter, "tags"):
+        value = str(tag).strip()
+        if not value:
+            continue
+        if not value.startswith("#"):
+            value = f"#{value}"
+        hashtags.append(value)
+    hashtags = list(dict.fromkeys(hashtags))
+    publish = args.publish or publish_input or front_matter_published
     article_id = article_id or front_matter_note_id
     content = body
 
@@ -173,6 +239,8 @@ def main():
         image_path,
         eyecatch_image_url=eyecatch_image_url,
         article_id=article_id,
+        publish=publish,
+        hashtags=hashtags,
     )
     if success and write_note_id:
         if created_new and posted_article_id:

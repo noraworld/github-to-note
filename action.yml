@@ -23,6 +23,9 @@ inputs:
   write_note_id:
     description: "Optional flag to write generated note_id back to content_file on successful new post"
     required: false
+  publish:
+    description: "Optional flag to publish article (otherwise saved as draft)"
+    required: false
 
 runs:
   using: "docker"

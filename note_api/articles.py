@@ -151,3 +151,79 @@ def update_article_draft(
     else:
         print("記事の更新失敗: リクエストが実行されませんでした")
     return False
+
+
+def publish_article(
+    cookies,
+    article_id,
+    title,
+    markdown_content,
+    hashtags=None,
+    article_key=None,
+    embedded_image_keys=None,
+):
+    """記事を公開する"""
+    headers = build_note_api_headers(cookies)
+    html_content = markdown_to_html(markdown_content)
+    body_length = markdown_body_length(markdown_content)
+    normalized_hashtags = []
+    for tag in hashtags or []:
+        value = str(tag).strip()
+        if not value:
+            continue
+        if not value.startswith("#"):
+            value = f"#{value}"
+        normalized_hashtags.append(value)
+
+    payload = {
+        "author_ids": [],
+        "body_length": body_length,
+        "disable_comment": False,
+        "exclude_from_creator_top": False,
+        "exclude_ai_learning_reward": False,
+        "free_body": html_content,
+        "hashtags": normalized_hashtags,
+        "image_keys": list(dict.fromkeys(embedded_image_keys or [])),
+        "index": False,
+        "is_refund": False,
+        "limited": False,
+        "magazine_ids": [],
+        "magazine_keys": [],
+        "name": title,
+        "pay_body": "",
+        "price": 0,
+        "send_notifications_flag": True,
+        "separator": None,
+        "status": "published",
+        "circle_permissions": [],
+        "discount_campaigns": [],
+        "lead_form": {"is_active": False, "consent_url": ""},
+        "line_add_friend": {"is_active": False, "keyword": "", "add_friend_url": ""},
+    }
+    if article_key:
+        payload["slug"] = f"slug-{article_key}"
+
+    response = requests.put(
+        f"https://note.com/api/v1/text_notes/{article_id}",
+        cookies=cookies,
+        headers=headers,
+        json=payload,
+    )
+    if response.status_code not in (200, 201):
+        print(f"記事の公開失敗: {response.status_code}")
+        print(f"レスポンス本文: {response.text[:500]}")
+        return False
+
+    try:
+        resp_json = response.json()
+    except Exception:
+        resp_json = {}
+    error = resp_json.get("error") if isinstance(resp_json, dict) else None
+    if error:
+        code = error.get("code", "unknown")
+        message = error.get("message", "")
+        print(f"記事の公開失敗: APIエラー code={code}, message={message}")
+        return False
+
+    print("記事の公開成功！")
+    return True
