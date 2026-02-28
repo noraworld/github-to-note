@@ -20,6 +20,9 @@ inputs:
   article_id:
     description: "Optional note article ID. If set, updates existing article (overrides YAML note_id)"
     required: false
+  write_note_id:
+    description: "Optional flag to write generated note_id back to content_file on successful new post"
+    required: false
 
 runs:
   using: "docker"

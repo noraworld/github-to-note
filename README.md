@@ -37,9 +37,11 @@ jobs:
 - `content_file` (optional): path to markdown file (`title` and optional `note_id` are read from YAML front matter)
 - `image_path` (optional): local image path for eyecatch upload
 - `article_id` (optional): existing note article ID to update (overrides YAML `note_id`)
+- `write_note_id` (optional): if truthy, writes generated `note_id` back to `content_file` on successful new post
 
 Note: You must provide either `content` or `content_file`, and include `title` in YAML front matter.
 If either `article_id` input/option or YAML `note_id` exists, the action updates that article; if neither exists, it creates a new article.
+If `write_note_id` is enabled, `note_id` is written only when a new article is created successfully.
 
 ## Example with `content_file`
 
@@ -63,6 +65,7 @@ jobs:
           note_email: ${{ secrets.NOTE_EMAIL }}
           note_password: ${{ secrets.NOTE_PASSWORD }}
           content_file: ./sample.md
+          write_note_id: "true"
           # article_id: 148375502
 ```
 
@@ -130,6 +133,14 @@ pipenv run python main.py \
   --show-browser
 ```
 
+Write generated `note_id` back to the file after successful new post:
+
+```bash
+pipenv run python main.py \
+  --content-file ./sample.md \
+  --write-note-id
+```
+
 You can also pass markdown directly:
 
 ```bash
@@ -150,6 +161,7 @@ cat ./sample.md | pipenv run python main.py
 - `--content-file`: path to markdown file (falls back to `INPUT_CONTENT_FILE`)
 - `--image-path`: optional local image path for eyecatch (falls back to `INPUT_IMAGE_PATH`)
 - `--article-id`: existing note article ID to update (falls back to `INPUT_ARTICLE_ID`; overrides YAML `note_id`)
+- `--write-note-id`: write generated `note_id` back to `--content-file` on successful new post (falls back to `INPUT_WRITE_NOTE_ID`)
 - `--show-browser`: launch Chrome with UI for login debugging (equivalent to `NOTE_SHOW_BROWSER=1`)
 
 Note: You must provide content via `--content`, `--content-file`, or stdin, and include YAML front matter with `title`.

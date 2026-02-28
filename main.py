@@ -20,6 +20,12 @@ def _get_input(name, env_fallback=None, default=None):
     return default
 
 
+def _is_truthy(value):
+    if value is None:
+        return False
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
+
+
 def _read_content(content_arg, content_file_arg):
     content = content_arg
     content_file = content_file_arg
@@ -67,6 +73,46 @@ def _extract_front_matter_value(front_matter, key):
     return None
 
 
+def _upsert_note_id_to_content_file(content_file, note_id):
+    try:
+        with open(content_file, "r", encoding="utf-8") as f:
+            source = f.read()
+    except Exception as exc:
+        print(f"note_id の書き戻し失敗: ファイル読み込み不可 ({exc})")
+        return False
+
+    front_matter, body = _split_front_matter_and_body(source)
+    if not front_matter:
+        print("note_id の書き戻しスキップ: YAML front matter がありません。")
+        return False
+
+    note_id_line = f"note_id: {note_id}"
+    if re.search(r"^\s*note_id\s*:\s*.+$", front_matter, flags=re.MULTILINE):
+        updated_front_matter = re.sub(
+            r"^\s*note_id\s*:\s*.+$",
+            note_id_line,
+            front_matter,
+            count=1,
+            flags=re.MULTILINE,
+        )
+    else:
+        if front_matter.endswith("\n"):
+            updated_front_matter = f"{front_matter}{note_id_line}"
+        else:
+            updated_front_matter = f"{front_matter}\n{note_id_line}"
+
+    updated_source = f"---\n{updated_front_matter}\n---\n{body}"
+    try:
+        with open(content_file, "w", encoding="utf-8") as f:
+            f.write(updated_source)
+    except Exception as exc:
+        print(f"note_id の書き戻し失敗: ファイル書き込み不可 ({exc})")
+        return False
+
+    print(f"content_file に note_id を書き戻しました: {content_file} (note_id={note_id})")
+    return True
+
+
 def build_args():
     parser = argparse.ArgumentParser(
         description="Post markdown content to note.com draft."
@@ -77,6 +123,7 @@ def build_args():
     parser.add_argument("--content-file", default=None)
     parser.add_argument("--image-path", default=None)
     parser.add_argument("--article-id", default=None)
+    parser.add_argument("--write-note-id", action="store_true")
     parser.add_argument("--show-browser", action="store_true")
     return parser.parse_args()
 
@@ -89,12 +136,12 @@ def main():
     password = args.note_password or _get_input(
         "note_password", env_fallback="NOTE_PASSWORD"
     )
-    content = _read_content(
-        args.content or _get_input("content"),
-        args.content_file or _get_input("content_file"),
-    )
+    content_arg = args.content or _get_input("content")
+    content_file = args.content_file or _get_input("content_file")
+    content = _read_content(content_arg, content_file)
     image_path = args.image_path or _get_input("image_path")
     article_id = args.article_id or _get_input("article_id")
+    write_note_id = args.write_note_id or _is_truthy(_get_input("write_note_id"))
     if args.show_browser:
         os.environ["NOTE_SHOW_BROWSER"] = "1"
 
@@ -118,7 +165,7 @@ def main():
         print("Missing content. Set --content / --content-file / INPUT_CONTENT.")
         return 1
 
-    success = post_to_note(
+    success, posted_article_id, created_new = post_to_note(
         email,
         password,
         title,
@@ -127,6 +174,14 @@ def main():
         eyecatch_image_url=eyecatch_image_url,
         article_id=article_id,
     )
+    if success and write_note_id:
+        if created_new and posted_article_id:
+            if content_file:
+                _upsert_note_id_to_content_file(content_file, posted_article_id)
+            else:
+                print("note_id の書き戻しスキップ: content_file が指定されていません。")
+        else:
+            print("note_id の書き戻しスキップ: 新規投稿ではないため実施しません。")
     return 0 if success else 1
 
 
