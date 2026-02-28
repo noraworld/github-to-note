@@ -34,11 +34,12 @@ jobs:
 - `note_email` (required): note.com login email
 - `note_password` (required): note.com login password
 - `content` (optional): markdown content string
-- `content_file` (optional): path to markdown file
+- `content_file` (optional): path to markdown file (`title` and optional `note_id` are read from YAML front matter)
 - `image_path` (optional): local image path for eyecatch upload
-- `article_id` (optional): existing note article ID to update (if omitted, creates a new article)
+- `article_id` (optional): existing note article ID to update (overrides YAML `note_id`)
 
 Note: You must provide either `content` or `content_file`, and include `title` in YAML front matter.
+If either `article_id` input/option or YAML `note_id` exists, the action updates that article; if neither exists, it creates a new article.
 
 ## Example with `content_file`
 
@@ -112,6 +113,15 @@ pipenv run python main.py \
   --article-id 148375502
 ```
 
+Or set `note_id` in YAML front matter and run without `--article-id`:
+
+```yaml
+---
+title: "Weekly update"
+note_id: 148375502
+---
+```
+
 Show the browser (disable headless) for login debugging:
 
 ```bash
@@ -139,7 +149,7 @@ cat ./sample.md | pipenv run python main.py
 - `--content`: markdown content string (falls back to `INPUT_CONTENT`)
 - `--content-file`: path to markdown file (falls back to `INPUT_CONTENT_FILE`)
 - `--image-path`: optional local image path for eyecatch (falls back to `INPUT_IMAGE_PATH`)
-- `--article-id`: existing note article ID to update (falls back to `INPUT_ARTICLE_ID`)
+- `--article-id`: existing note article ID to update (falls back to `INPUT_ARTICLE_ID`; overrides YAML `note_id`)
 - `--show-browser`: launch Chrome with UI for login debugging (equivalent to `NOTE_SHOW_BROWSER=1`)
 
 Note: You must provide content via `--content`, `--content-file`, or stdin, and include YAML front matter with `title`.

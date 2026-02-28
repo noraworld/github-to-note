@@ -101,6 +101,8 @@ def main():
     front_matter, body = _split_front_matter_and_body(content)
     title = _extract_title_from_front_matter(front_matter)
     eyecatch_image_url = _extract_front_matter_value(front_matter, "image")
+    front_matter_note_id = _extract_front_matter_value(front_matter, "note_id")
+    article_id = article_id or front_matter_note_id
     content = body
 
     if not email:

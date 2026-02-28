@@ -12,13 +12,13 @@ inputs:
     description: "Markdown content string (supports YAML front matter)"
     required: false
   content_file:
-    description: "Path to markdown file (preferred; title is read from YAML front matter)"
+    description: "Path to markdown file (preferred; title and optional note_id are read from YAML front matter)"
     required: false
   image_path:
     description: "Optional local image path for eyecatch upload"
     required: false
   article_id:
-    description: "Optional note article ID. If set, update the existing article instead of creating a new one"
+    description: "Optional note article ID. If set, updates existing article (overrides YAML note_id)"
     required: false
 
 runs:
