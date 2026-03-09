@@ -78,6 +78,13 @@ def _extract_front_matter_bool(front_matter, key):
     return _is_truthy(value)
 
 
+def _has_front_matter_key(front_matter, key):
+    if not front_matter:
+        return False
+    pattern = re.compile(rf"^\s*{re.escape(key)}\s*:", flags=re.MULTILINE)
+    return pattern.search(front_matter) is not None
+
+
 def _strip_quotes(text):
     value = (text or "").strip()
     if (value.startswith('"') and value.endswith('"')) or (
@@ -216,15 +223,17 @@ def main():
     eyecatch_image_url = _extract_front_matter_value(front_matter, "image")
     front_matter_note_id = _extract_front_matter_value(front_matter, "note_id")
     front_matter_published = _extract_front_matter_bool(front_matter, "note_published")
-    hashtags = []
-    for tag in _extract_front_matter_string_list(front_matter, "hashtags"):
-        value = str(tag).strip()
-        if not value:
-            continue
-        if not value.startswith("#"):
-            value = f"#{value}"
-        hashtags.append(value)
-    hashtags = list(dict.fromkeys(hashtags))
+    hashtags = None
+    if _has_front_matter_key(front_matter, "hashtags"):
+        hashtags = []
+        for tag in _extract_front_matter_string_list(front_matter, "hashtags"):
+            value = str(tag).strip()
+            if not value:
+                continue
+            if not value.startswith("#"):
+                value = f"#{value}"
+            hashtags.append(value)
+        hashtags = list(dict.fromkeys(hashtags))
     publish = args.publish or publish_input or front_matter_published
     article_id = article_id or front_matter_note_id
     content = body

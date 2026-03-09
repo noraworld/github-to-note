@@ -223,6 +223,7 @@ Note: You must provide content via `--content`, `--content-file`, or stdin, and 
 - `image`: optional eyecatch/thumbnail image URL
 - `note_published`: optional boolean (`true` to publish; otherwise draft)
 - `hashtags`: optional string array, converted to note hashtags (e.g. `["foo", "bar"]` -> `["#foo", "#bar"]`)
+  - If omitted while updating and publishing an existing note, current hashtags on note are preserved.
 
 ### Example `content_file`
 

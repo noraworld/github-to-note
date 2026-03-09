@@ -166,14 +166,16 @@ def publish_article(
     headers = build_note_api_headers(cookies)
     html_content = markdown_to_html(markdown_content)
     body_length = markdown_body_length(markdown_content)
-    normalized_hashtags = []
-    for tag in hashtags or []:
-        value = str(tag).strip()
-        if not value:
-            continue
-        if not value.startswith("#"):
-            value = f"#{value}"
-        normalized_hashtags.append(value)
+    normalized_hashtags = None
+    if hashtags is not None:
+        normalized_hashtags = []
+        for tag in hashtags:
+            value = str(tag).strip()
+            if not value:
+                continue
+            if not value.startswith("#"):
+                value = f"#{value}"
+            normalized_hashtags.append(value)
 
     payload = {
         "author_ids": [],
@@ -182,7 +184,6 @@ def publish_article(
         "exclude_from_creator_top": False,
         "exclude_ai_learning_reward": False,
         "free_body": html_content,
-        "hashtags": normalized_hashtags,
         "image_keys": list(dict.fromkeys(embedded_image_keys or [])),
         "index": False,
         "is_refund": False,
@@ -200,6 +201,8 @@ def publish_article(
         "lead_form": {"is_active": False, "consent_url": ""},
         "line_add_friend": {"is_active": False, "keyword": "", "add_friend_url": ""},
     }
+    if normalized_hashtags is not None:
+        payload["hashtags"] = normalized_hashtags
     if article_key:
         payload["slug"] = f"slug-{article_key}"
 
