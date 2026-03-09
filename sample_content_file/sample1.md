@@ -10,7 +10,7 @@ date: 2026-02-25 09:30:00 +09:00
 tags: [
   "sample"
 ]
-published: true
+note_published: true
 ---
 
 # 温度を少し下げただけの話

@@ -11,7 +11,7 @@ tags: [
   "sample",
   "test"
 ]
-published: true
+note_published: true
 ---
 
 # テスト

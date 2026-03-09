@@ -214,7 +214,7 @@ def main():
     title = _extract_title_from_front_matter(front_matter)
     eyecatch_image_url = _extract_front_matter_value(front_matter, "image")
     front_matter_note_id = _extract_front_matter_value(front_matter, "note_id")
-    front_matter_published = _extract_front_matter_bool(front_matter, "published")
+    front_matter_published = _extract_front_matter_bool(front_matter, "note_published")
     hashtags = []
     for tag in _extract_front_matter_string_list(front_matter, "tags"):
         value = str(tag).strip()
