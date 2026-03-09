@@ -11,6 +11,10 @@ tags: [
   "sample",
   "test"
 ]
+hashtags: [
+  "foo",
+  "bar"
+]
 note_published: true
 ---
 

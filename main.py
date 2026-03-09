@@ -217,7 +217,7 @@ def main():
     front_matter_note_id = _extract_front_matter_value(front_matter, "note_id")
     front_matter_published = _extract_front_matter_bool(front_matter, "note_published")
     hashtags = []
-    for tag in _extract_front_matter_string_list(front_matter, "tags"):
+    for tag in _extract_front_matter_string_list(front_matter, "hashtags"):
         value = str(tag).strip()
         if not value:
             continue

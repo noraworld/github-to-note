@@ -8,6 +8,9 @@ description: "朝のコーヒーを少しだけ変えてみた記録と、日々
 image: "https://fastly.picsum.photos/id/1029/200/300.jpg?hmac=VpePgDBTGFZYhRTeOD9o6nCvZB_01SrIHCMMkoZal_A"
 date: 2026-02-25 09:30:00 +09:00
 tags: [
+  "thoughts"
+]
+hashtags: [
   "sample"
 ]
 note_published: true
