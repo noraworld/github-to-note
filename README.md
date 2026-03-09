@@ -219,6 +219,7 @@ Note: You must provide content via `--content`, `--content-file`, or stdin, and 
 
 - `title`: required article title
 - `note_id`: optional existing note article ID for update mode
+- `note_disabled`: optional boolean (`true` to skip all note processing for the file)
 - `image`: optional eyecatch/thumbnail image URL
 - `note_published`: optional boolean (`true` to publish; otherwise draft)
 - `tags`: optional string array, converted to note hashtags (e.g. `["foo", "bar"]` -> `["#foo", "#bar"]`)

@@ -211,6 +211,7 @@ def main():
         os.environ["NOTE_SHOW_BROWSER"] = "1"
 
     front_matter, body = _split_front_matter_and_body(content)
+    note_disabled = _extract_front_matter_bool(front_matter, "note_disabled")
     title = _extract_title_from_front_matter(front_matter)
     eyecatch_image_url = _extract_front_matter_value(front_matter, "image")
     front_matter_note_id = _extract_front_matter_value(front_matter, "note_id")
@@ -227,6 +228,10 @@ def main():
     publish = args.publish or publish_input or front_matter_published
     article_id = article_id or front_matter_note_id
     content = body
+
+    if note_disabled:
+        print("YAML front matter で note_disabled: true が指定されているため、note への処理をスキップします。")
+        return 0
 
     if not email:
         print("Missing note email. Set --note-email or NOTE_EMAIL.")
