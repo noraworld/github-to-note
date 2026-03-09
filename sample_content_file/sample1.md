@@ -10,7 +10,7 @@ date: 2026-02-25 09:30:00 +09:00
 tags: [
   "thoughts"
 ]
-hashtags: [
+note_hashtags: [
   "sample"
 ]
 note_published: true

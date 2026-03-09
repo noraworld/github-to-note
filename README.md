@@ -222,7 +222,7 @@ Note: You must provide content via `--content`, `--content-file`, or stdin, and 
 - `note_disabled`: optional boolean (`true` to skip all note processing for the file)
 - `image`: optional eyecatch/thumbnail image URL
 - `note_published`: optional boolean (`true` to publish; otherwise draft)
-- `hashtags`: optional string array, converted to note hashtags (e.g. `["foo", "bar"]` -> `["#foo", "#bar"]`)
+- `note_hashtags`: optional string array, converted to note hashtags (e.g. `["foo", "bar"]` -> `["#foo", "#bar"]`)
   - If omitted while updating and publishing an existing note, current hashtags on note are preserved.
 
 ### Example `content_file`
@@ -233,7 +233,7 @@ title: "Weekly update"
 note_id: 148375502
 image: "https://example.com/eyecatch.jpg"
 note_published: true
-hashtags: ["foo", "bar"]
+note_hashtags: ["foo", "bar"]
 ---
 
 # Weekly update

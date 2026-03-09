@@ -11,7 +11,7 @@ tags: [
   "sample",
   "test"
 ]
-hashtags: [
+note_hashtags: [
   "foo",
   "bar"
 ]
