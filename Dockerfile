@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir selenium requests python-dotenv
+RUN pip install --no-cache-dir selenium requests python-dotenv Pillow
 
 COPY note_api /app/note_api
 COPY main.py /app/main.py
