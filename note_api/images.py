@@ -6,6 +6,7 @@ import time
 from urllib.parse import urlparse
 
 import requests
+from PIL import Image
 
 
 def check_url_status(url):
@@ -14,6 +15,73 @@ def check_url_status(url):
         return resp.status_code
     except requests.RequestException:
         return "ERR"
+
+
+def _parse_eyecatch_ratio_error(resp):
+    try:
+        payload = resp.json()
+    except ValueError:
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    error = payload.get("error")
+    if not isinstance(error, dict):
+        return None
+
+    message = str(error.get("message") or "").strip()
+    if not message:
+        return None
+
+    match = re.search(r"(\d+)\s*:\s*(\d+)", message)
+    if not match:
+        return None
+
+    width_ratio = int(match.group(1))
+    height_ratio = int(match.group(2))
+    if width_ratio <= 0 or height_ratio <= 0:
+        return None
+
+    return {
+        "code": error.get("code"),
+        "message": message,
+        "width_ratio": width_ratio,
+        "height_ratio": height_ratio,
+    }
+
+
+def _center_crop_to_ratio(image_path, width_ratio, height_ratio):
+    with Image.open(image_path) as img:
+        src_width, src_height = img.size
+        target_ratio = width_ratio / height_ratio
+        src_ratio = src_width / src_height
+
+        if abs(src_ratio - target_ratio) < 1e-6:
+            return image_path
+
+        if src_ratio > target_ratio:
+            crop_width = max(1, int(round(src_height * target_ratio)))
+            crop_height = src_height
+        else:
+            crop_width = src_width
+            crop_height = max(1, int(round(src_width / target_ratio)))
+
+        left = max(0, (src_width - crop_width) // 2)
+        top = max(0, (src_height - crop_height) // 2)
+        right = left + crop_width
+        bottom = top + crop_height
+
+        cropped = img.crop((left, top, right, bottom))
+        suffix = os.path.splitext(image_path)[1] or ".jpg"
+        temp_path = tempfile.NamedTemporaryFile(delete=False, suffix=suffix).name
+        save_image = cropped
+        if save_image.mode not in ("RGB", "RGBA", "L"):
+            save_image = save_image.convert("RGB")
+        if suffix.lower() in (".jpg", ".jpeg") and save_image.mode == "RGBA":
+            save_image = save_image.convert("RGB")
+        save_image.save(temp_path)
+        return temp_path
 
 
 def upload_image(cookies, image_path):
@@ -222,9 +290,21 @@ def upload_note_eyecatch(cookies, note_id, image_path):
                         f"url={eyecatch_url}, key={eyecatch_key}, data_keys={list(data.keys())}"
                     )
                     return {
+                        "success": True,
                         "url": eyecatch_url,
                         "key": eyecatch_key,
                         "data": data,
+                    }
+                ratio_error = _parse_eyecatch_ratio_error(resp)
+                if ratio_error:
+                    print(
+                        "サムネイル画像アップロード失敗: "
+                        f"{ratio_error['message']} "
+                        f"(status={resp.status_code})"
+                    )
+                    return {
+                        "success": False,
+                        "error": ratio_error,
                     }
                 print(
                     "サムネイル画像アップロード失敗: "
@@ -261,11 +341,32 @@ def upload_note_eyecatch_from_url(cookies, note_id, image_url):
         ext = mimetypes.guess_extension(content_type) or ".jpg"
 
     temp_path = None
+    cropped_temp_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             tmp.write(response.content)
             temp_path = tmp.name
-        return upload_note_eyecatch(cookies, note_id, temp_path)
+        result = upload_note_eyecatch(cookies, note_id, temp_path)
+        if result and result.get("success"):
+            return result
+
+        ratio_error = result.get("error") if isinstance(result, dict) else None
+        if ratio_error and ratio_error.get("width_ratio") and ratio_error.get("height_ratio"):
+            width_ratio = ratio_error["width_ratio"]
+            height_ratio = ratio_error["height_ratio"]
+            print(
+                "サムネイル画像を中央クロップして再試行: "
+                f"{width_ratio}:{height_ratio}"
+            )
+            cropped_temp_path = _center_crop_to_ratio(temp_path, width_ratio, height_ratio)
+            retry_result = upload_note_eyecatch(cookies, note_id, cropped_temp_path)
+            if retry_result and retry_result.get("success"):
+                return retry_result
+            return None
+
+        return None
     finally:
+        if cropped_temp_path and cropped_temp_path != temp_path and os.path.exists(cropped_temp_path):
+            os.remove(cropped_temp_path)
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
