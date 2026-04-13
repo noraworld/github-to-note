@@ -205,12 +205,33 @@ def upload_note_eyecatch(cookies, note_id, image_path):
             last_resp = resp
             if resp.status_code in (200, 201):
                 try:
-                    data = resp.json().get("data", {})
+                    payload = resp.json()
                 except ValueError:
-                    data = {}
+                    payload = {}
+                data = payload.get("data", {}) if isinstance(payload, dict) else {}
                 eyecatch_url = data.get("url")
-                print(f"サムネイル画像アップロード成功: {eyecatch_url}")
-                return eyecatch_url
+                eyecatch_key = (
+                    data.get("key")
+                    or data.get("image_key")
+                    or data.get("eyecatch_image_key")
+                    or data.get("path")
+                )
+                if eyecatch_url or eyecatch_key:
+                    print(
+                        "サムネイル画像アップロード成功: "
+                        f"url={eyecatch_url}, key={eyecatch_key}, data_keys={list(data.keys())}"
+                    )
+                    return {
+                        "url": eyecatch_url,
+                        "key": eyecatch_key,
+                        "data": data,
+                    }
+                print(
+                    "サムネイル画像アップロード失敗: "
+                    f"レスポンスに url/key がありません "
+                    f"(status={resp.status_code}, data_keys={list(data.keys())})"
+                )
+                print(f"レスポンス本文: {resp.text[:500]}")
         time.sleep(1.5 * attempt)
 
     if last_resp is not None:

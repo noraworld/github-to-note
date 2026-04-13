@@ -43,9 +43,14 @@ def post_to_note(
         return False, None, False
 
     image_key = None
+    eyecatch_upload = None
     if image_path:
         print("4. 画像をアップロード中...")
         # image_key, _ = upload_image(cookies, image_path)
+    if eyecatch_image_url:
+        print("4. YAML image をサムネイルとしてアップロード中...")
+        eyecatch_upload = upload_note_eyecatch_from_url(cookies, article_id, eyecatch_image_url)
+    eyecatch_image_key = eyecatch_upload.get("key") if eyecatch_upload else None
 
     print("5. 記事を下書き保存中...")
     success = update_article_draft(
@@ -56,6 +61,7 @@ def post_to_note(
         processed_markdown,
         image_key,
         embedded_image_keys,
+        eyecatch_image_key=eyecatch_image_key,
     )
     if not success:
         return False, None, created_new
@@ -70,13 +76,10 @@ def post_to_note(
             hashtags=hashtags,
             article_key=article_key,
             embedded_image_keys=embedded_image_keys,
+            eyecatch_image_key=eyecatch_image_key,
         )
         if not success:
             return False, None, created_new
-
-    if eyecatch_image_url:
-        print("7. YAML image をサムネイルとしてアップロード中...")
-        upload_note_eyecatch_from_url(cookies, article_id, eyecatch_image_url)
 
     if publish:
         print("\n✅ 公開完了！")

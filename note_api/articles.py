@@ -76,6 +76,7 @@ def update_article_draft(
     markdown_content,
     image_key=None,
     embedded_image_keys=None,
+    eyecatch_image_key=None,
 ):
     """記事を更新して下書き保存"""
     embedded_image_keys = list(dict.fromkeys(embedded_image_keys or []))
@@ -113,9 +114,9 @@ def update_article_draft(
         {"key": article_key, "name": title, "body": html_content},
     ]
 
-    if image_key:
+    if image_key or eyecatch_image_key:
         for payload in payload_candidates:
-            payload["eyecatch_image_key"] = image_key
+            payload["eyecatch_image_key"] = eyecatch_image_key or image_key
 
     last_response = None
     for idx, payload in enumerate(payload_candidates, 1):
@@ -161,6 +162,7 @@ def publish_article(
     hashtags=None,
     article_key=None,
     embedded_image_keys=None,
+    eyecatch_image_key=None,
 ):
     """記事を公開する"""
     headers = build_note_api_headers(cookies)
@@ -205,6 +207,8 @@ def publish_article(
         payload["hashtags"] = normalized_hashtags
     if article_key:
         payload["slug"] = f"slug-{article_key}"
+    if eyecatch_image_key:
+        payload["eyecatch_image_key"] = eyecatch_image_key
 
     response = requests.put(
         f"https://note.com/api/v1/text_notes/{article_id}",
