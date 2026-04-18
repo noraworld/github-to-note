@@ -55,6 +55,29 @@ def _is_truthy_env(name):
     return str(value).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _mask_headless_user_agent(driver):
+    """Best-effortで HeadlessChrome を Chrome に置き換える。失敗しても継続する。"""
+    try:
+        current_user_agent = driver.execute_script("return navigator.userAgent")
+        if not current_user_agent or "HeadlessChrome/" not in current_user_agent:
+            return
+
+        masked_user_agent = current_user_agent.replace("HeadlessChrome/", "Chrome/")
+        driver.execute_cdp_cmd(
+            "Network.setUserAgentOverride",
+            {
+                "userAgent": masked_user_agent,
+                "acceptLanguage": "ja-JP",
+                "platform": "MacIntel",
+            },
+        )
+    except Exception as exc:
+        print(
+            "HeadlessChrome を Chrome に置き換える User-Agent 補助処理に失敗しました。"
+            f"処理は継続します: {exc}"
+        )
+
+
 def _build_driver():
     options = webdriver.ChromeOptions()
     if not _is_truthy_env("NOTE_SHOW_BROWSER"):
@@ -64,10 +87,6 @@ def _build_driver():
     options.add_argument("--window-size=1280,720")
     options.add_argument("--lang=ja-JP")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument(
-        "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
-    )
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
 
@@ -88,6 +107,7 @@ def get_note_cookies(email, password):
     if _is_truthy_env("NOTE_SHOW_BROWSER"):
         print("NOTE_SHOW_BROWSER=1 のためヘッドレスを無効化して起動します。")
     driver = _build_driver()
+    _mask_headless_user_agent(driver)
     login_error = None
 
     try:
