@@ -42,25 +42,46 @@ def markdown_to_html(markdown_text):
     def inline_format(s):
         # note does not support inline code spans; keep them as plain text.
         s = re.sub(r"`([^`]+)`", r"\1", s)
-        s = escape(s)
+        placeholders = []
 
         def replace_image(match):
             alt = escape(match.group(1).strip())
             url = escape(match.group(2).strip(), quote=True)
-            return f'<img src="{url}" alt="{alt}" loading="lazy" class="is-slide" data-modal="true">'
+            placeholders.append(
+                f'<img src="{url}" alt="{alt}" loading="lazy" class="is-slide" data-modal="true">'
+            )
+            return f"@@PLACEHOLDER_{len(placeholders) - 1}@@"
 
         def replace_link(match):
             label = match.group(1).strip()
             url = escape(match.group(2).strip(), quote=True)
             label = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", escape(label))
             label = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", label)
-            return f'<a href="{url}" target="_blank" rel="noopener noreferrer">{label}</a>'
+            placeholders.append(
+                f'<a href="{url}" target="_blank" rel="noopener noreferrer">{label}</a>'
+            )
+            return f"@@PLACEHOLDER_{len(placeholders) - 1}@@"
+
+        def replace_bare_url(match):
+            url = match.group(0)
+            trailing = ""
+            while url and url[-1] in ".,!?;:":
+                trailing = url[-1] + trailing
+                url = url[:-1]
+            placeholders.append(
+                f'<a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">{escape(url)}</a>'
+            )
+            return f"@@PLACEHOLDER_{len(placeholders) - 1}@@" + trailing
 
         s = re.sub(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)", replace_image, s)
         s = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", replace_link, s)
+        s = escape(s)
+        s = re.sub(r"https?://[^\s<]+", replace_bare_url, s)
         s = re.sub(r"~~(.+?)~~", r"<s>\1</s>", s)
         s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
         s = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", s)
+        for idx, html in enumerate(placeholders):
+            s = s.replace(f"@@PLACEHOLDER_{idx}@@", html)
 
         return s
 

@@ -92,7 +92,7 @@ if temperature < 95:
 #### 外部リンク
 詳しい淹れ方は [公式のガイド](https://example.com) を参考にしています。
 
-自動リンクも：[https://example.com](https://example.com)
+自動リンクも：https://example.com
 
 ---
 
