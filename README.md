@@ -181,6 +181,14 @@ pipenv run python main.py \
   --show-browser
 ```
 
+Print verbose debug info such as the effective `navigator.userAgent` after override:
+
+```bash
+pipenv run python main.py \
+  --content-file ./sample.md \
+  --verbose
+```
+
 Write generated `note_id` back to the file after successful new post:
 
 ```bash
@@ -242,6 +250,7 @@ If you do not need a manually installed ChromeDriver, removing the outdated bina
 - `--write-note-id`: write generated `note_id` back to `--content-file` on successful new post (falls back to `INPUT_WRITE_NOTE_ID`)
 - `--publish`: publish article instead of saving draft (falls back to `INPUT_PUBLISH`; YAML `note_published: true` also enables publish)
 - `--show-browser`: launch Chrome with UI for login debugging (equivalent to `NOTE_SHOW_BROWSER=1`)
+- `--verbose`: print verbose debug info such as `navigator.userAgent` after override (equivalent to `NOTE_VERBOSE=1` or `INPUT_VERBOSE`)
 
 Note: You must provide content via `--content`, `--content-file`, or stdin, and include YAML front matter with `title`.
 

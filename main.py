@@ -196,6 +196,7 @@ def build_args():
     parser.add_argument("--write-note-id", action="store_true")
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--show-browser", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()
 
 
@@ -216,6 +217,8 @@ def main():
     publish_input = _is_truthy(_get_input("publish"))
     if args.show_browser:
         os.environ["NOTE_SHOW_BROWSER"] = "1"
+    if args.verbose or _is_truthy(_get_input("verbose")):
+        os.environ["NOTE_VERBOSE"] = "1"
 
     front_matter, body = _split_front_matter_and_body(content)
     note_disabled = _extract_front_matter_bool(front_matter, "note_disabled")

@@ -55,11 +55,30 @@ def _is_truthy_env(name):
     return str(value).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _is_verbose_enabled():
+    return _is_truthy_env("NOTE_VERBOSE")
+
+
+def _debug_log_user_agent(driver, label):
+    """verbose 有効時のみ、現在の navigator.userAgent を表示する。"""
+    if not _is_verbose_enabled():
+        return
+    try:
+        current_user_agent = driver.execute_script("return navigator.userAgent")
+        print(f"[auth debug] navigator.userAgent ({label}): {current_user_agent}")
+    except Exception as exc:
+        print(
+            f"[auth debug] navigator.userAgent ({label}) の取得に失敗しました。"
+            f"処理は継続します: {exc}"
+        )
+
+
 def _mask_headless_user_agent(driver):
     """Best-effortで HeadlessChrome を Chrome に置き換える。失敗しても継続する。"""
     try:
         current_user_agent = driver.execute_script("return navigator.userAgent")
         if not current_user_agent or "HeadlessChrome/" not in current_user_agent:
+            _debug_log_user_agent(driver, "without override")
             return
 
         masked_user_agent = current_user_agent.replace("HeadlessChrome/", "Chrome/")
@@ -71,6 +90,7 @@ def _mask_headless_user_agent(driver):
                 "platform": "MacIntel",
             },
         )
+        _debug_log_user_agent(driver, "after override")
     except Exception as exc:
         print(
             "HeadlessChrome を Chrome に置き換える User-Agent 補助処理に失敗しました。"
