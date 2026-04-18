@@ -239,6 +239,37 @@ pipenv run python main.py --content-file=sample_content_file/sample1.md
 
 If you do not need a manually installed ChromeDriver, removing the outdated binary from `PATH` is also effective.
 
+#### macOS says `"chromedriver" Not Opened`
+
+After updating Homebrew `chromedriver`, macOS Gatekeeper may show a warning like:
+
+```text
+"chromedriver" Not Opened
+Apple could not verify "chromedriver" is free of malware...
+```
+
+In this case, check whether the Homebrew binary still has the `com.apple.quarantine` attribute:
+
+```bash
+ls -l /opt/homebrew/bin/chromedriver
+xattr /opt/homebrew/bin/chromedriver
+```
+
+For example, `/opt/homebrew/bin/chromedriver` may be a symlink like this:
+
+```text
+/opt/homebrew/bin/chromedriver -> /opt/homebrew/Caskroom/chromedriver/147.0.7727.57/chromedriver-mac-arm64/chromedriver
+```
+
+If `xattr` output includes `com.apple.quarantine`, remove that attribute from the Homebrew `Caskroom` directory and verify again:
+
+```bash
+xattr -dr com.apple.quarantine /opt/homebrew/Caskroom/chromedriver
+xattr /opt/homebrew/bin/chromedriver
+```
+
+If `com.apple.quarantine` disappears and only entries such as `com.apple.provenance` remain, the warning should no longer appear when running this project.
+
 ## CLI Options (`main.py`)
 
 - `--note-email`: note.com login email (falls back to `NOTE_EMAIL` or `INPUT_NOTE_EMAIL`)
