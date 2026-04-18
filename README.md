@@ -201,6 +201,36 @@ pipenv run python main.py --content $'---\ntitle: \"Hello\"\n---\n# Body'
 cat ./sample.md | pipenv run python main.py
 ```
 
+### Troubleshooting
+
+#### ChromeDriver version mismatch
+
+If local execution fails with an error like the following, Chrome and ChromeDriver versions are mismatched:
+
+```text
+The chromedriver version (...) detected in PATH ... might not be compatible with the detected chrome version (...)
+selenium.common.exceptions.SessionNotCreatedException:
+Message: session not created: This version of ChromeDriver only supports Chrome version ...
+```
+
+This usually happens when an older `chromedriver` is installed in `PATH` and Selenium picks it up instead of a compatible version.
+
+Check the installed versions:
+
+```bash
+/opt/homebrew/bin/chromedriver --version
+'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --version
+```
+
+If the major versions differ, update ChromeDriver and retry:
+
+```bash
+brew upgrade --cask chromedriver
+pipenv run python main.py --content-file=sample_content_file/sample1.md
+```
+
+If you do not need a manually installed ChromeDriver, removing the outdated binary from `PATH` is also effective.
+
 ## CLI Options (`main.py`)
 
 - `--note-email`: note.com login email (falls back to `NOTE_EMAIL` or `INPUT_NOTE_EMAIL`)
