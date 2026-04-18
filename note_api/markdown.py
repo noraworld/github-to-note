@@ -3,9 +3,36 @@ import uuid
 from html import escape
 
 
+def sanitize_markdown(markdown_text):
+    """本文用 Markdown を正規化する。HTML コメントはコードフェンス外のみ除去する。"""
+    text = (markdown_text or "").replace("\r\n", "\n")
+    if not text:
+        return ""
+
+    sanitized_lines = []
+    in_code = False
+    code_fence_pattern = re.compile(r"^\s*(```|~~~)")
+    comment_pattern = re.compile(r"<!--.*?-->", flags=re.DOTALL)
+
+    for raw_line in text.split("\n"):
+        if code_fence_pattern.match(raw_line):
+            in_code = not in_code
+            sanitized_lines.append(raw_line)
+            continue
+
+        if in_code:
+            sanitized_lines.append(raw_line)
+            continue
+
+        cleaned_line = comment_pattern.sub("", raw_line)
+        sanitized_lines.append(cleaned_line)
+
+    return "\n".join(sanitized_lines)
+
+
 def markdown_to_html(markdown_text):
     """Markdownをnote表示向けHTMLに変換"""
-    text = markdown_text.replace("\r\n", "\n").strip()
+    text = sanitize_markdown(markdown_text).strip()
     if not text:
         return ""
 
@@ -214,7 +241,7 @@ def markdown_to_html(markdown_text):
 
 def markdown_body_length(markdown_text):
     """draft_save の body_length 用に本文テキスト長を算出"""
-    text = markdown_text or ""
+    text = sanitize_markdown(markdown_text)
     text = re.sub(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)", "", text)
     text = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r"\1", text)
     text = re.sub(r"^\s*#{1,6}\s*", "", text, flags=re.MULTILINE)

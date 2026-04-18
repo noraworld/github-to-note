@@ -6,6 +6,7 @@ from .articles import (
 )
 from .auth import get_note_cookies
 from .images import upload_markdown_images, upload_note_eyecatch_from_url
+from .markdown import sanitize_markdown
 
 
 def post_to_note(
@@ -20,6 +21,8 @@ def post_to_note(
     hashtags=None,
 ):
     """noteに記事を投稿するメインフロー"""
+    markdown_content = sanitize_markdown(markdown_content)
+
     print("1. noteにログイン中...")
     cookies = get_note_cookies(email, password)
     if not cookies:
