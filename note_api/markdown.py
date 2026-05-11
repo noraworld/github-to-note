@@ -3,6 +3,10 @@ import uuid
 from html import escape
 
 
+IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)")
+LINK_PATTERN = re.compile(r"\[((?:[^\[\]]|\[[^\[\]]*\])+)\]\((https?://[^)\s]+)\)")
+
+
 def sanitize_markdown(markdown_text):
     """本文用 Markdown を正規化する。HTML コメントはコードフェンス外のみ除去する。"""
     text = (markdown_text or "").replace("\r\n", "\n")
@@ -73,8 +77,8 @@ def markdown_to_html(markdown_text):
             )
             return f"@@PLACEHOLDER_{len(placeholders) - 1}@@" + trailing
 
-        s = re.sub(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)", replace_image, s)
-        s = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", replace_link, s)
+        s = IMAGE_PATTERN.sub(replace_image, s)
+        s = LINK_PATTERN.sub(replace_link, s)
         s = escape(s)
         s = re.sub(r"https?://[^\s<]+", replace_bare_url, s)
         s = re.sub(r"~~(.+?)~~", r"<s>\1</s>", s)
@@ -86,7 +90,7 @@ def markdown_to_html(markdown_text):
         return s
 
     def image_block(line):
-        m = re.match(r"^!\[([^\]]*)\]\((https?://[^)\s]+)\)$", line.strip())
+        m = IMAGE_PATTERN.fullmatch(line.strip())
         if not m:
             return None
         alt = escape(m.group(1).strip())
@@ -263,8 +267,8 @@ def markdown_to_html(markdown_text):
 def markdown_body_length(markdown_text):
     """draft_save の body_length 用に本文テキスト長を算出"""
     text = sanitize_markdown(markdown_text)
-    text = re.sub(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)", "", text)
-    text = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r"\1", text)
+    text = IMAGE_PATTERN.sub("", text)
+    text = LINK_PATTERN.sub(r"\1", text)
     text = re.sub(r"^\s*#{1,6}\s*", "", text, flags=re.MULTILINE)
     text = re.sub(r"^\s*[-*]\s+", "", text, flags=re.MULTILINE)
     text = re.sub(r"^\s*\d+[.)]\s+", "", text, flags=re.MULTILINE)
