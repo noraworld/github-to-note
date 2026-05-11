@@ -5,6 +5,11 @@ from html import escape
 
 IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\((https?://[^)\s]+)\)")
 LINK_PATTERN = re.compile(r"\[((?:[^\[\]]|\[[^\[\]]*\])+)\]\((https?://[^)\s]+)\)")
+ASCII_BLANK_PATTERN = re.compile(r"^[ \t]*$")
+
+
+def is_markdown_blank_line(line):
+    return ASCII_BLANK_PATTERN.fullmatch(line) is not None
 
 
 def sanitize_markdown(markdown_text):
@@ -36,7 +41,7 @@ def sanitize_markdown(markdown_text):
 
 def markdown_to_html(markdown_text):
     """Markdownをnote表示向けHTMLに変換"""
-    text = sanitize_markdown(markdown_text).strip()
+    text = sanitize_markdown(markdown_text).strip("\n")
     if not text:
         return ""
 
@@ -176,7 +181,7 @@ def markdown_to_html(markdown_text):
             code_lines.clear()
 
     for raw_line in lines:
-        line = raw_line.rstrip()
+        line = raw_line.rstrip("\r")
 
         if line.strip().startswith("```"):
             flush_paragraph()
@@ -193,7 +198,7 @@ def markdown_to_html(markdown_text):
             code_lines.append(line)
             continue
 
-        if not line.strip():
+        if is_markdown_blank_line(line):
             flush_paragraph()
             flush_list()
             flush_quote()
@@ -273,5 +278,5 @@ def markdown_body_length(markdown_text):
     text = re.sub(r"^\s*[-*]\s+", "", text, flags=re.MULTILINE)
     text = re.sub(r"^\s*\d+[.)]\s+", "", text, flags=re.MULTILINE)
     text = text.replace("**", "").replace("*", "").replace("`", "")
-    compact = re.sub(r"\s+", "", text)
+    compact = re.sub(r"[ \t\r\n]+", "", text)
     return len(compact)

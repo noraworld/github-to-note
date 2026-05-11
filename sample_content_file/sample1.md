@@ -112,7 +112,27 @@ if temperature < 95:
 
 ![コーヒーカップのイメージ 2](https://fastly.picsum.photos/id/361/200/300.jpg?hmac=unS_7uvpA3Q-hJTvI1xNCnlhta-oC6XnWZ4Y11UpjAo)
 
----
+<!-- ここから、全角スペース入りの行 -->
+　
+
+　
+
+　
+
+　
+
+　
+
+　
+
+　
+
+　
+
+　
+
+　
+<!-- ここまで全角スペース入りの行 -->
 
 最後に。
 
