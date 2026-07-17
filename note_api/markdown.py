@@ -20,11 +20,36 @@ def sanitize_markdown(markdown_text):
 
     sanitized_lines = []
     in_code = False
+    in_html_comment = False
     code_fence_pattern = re.compile(r"^\s*(```|~~~)")
-    comment_pattern = re.compile(r"<!--.*?-->", flags=re.DOTALL)
+
+    def strip_html_comments(line):
+        nonlocal in_html_comment
+        cleaned_parts = []
+        index = 0
+
+        while index < len(line):
+            if in_html_comment:
+                end_index = line.find("-->", index)
+                if end_index == -1:
+                    return "".join(cleaned_parts)
+                in_html_comment = False
+                index = end_index + len("-->")
+                continue
+
+            start_index = line.find("<!--", index)
+            if start_index == -1:
+                cleaned_parts.append(line[index:])
+                break
+
+            cleaned_parts.append(line[index:start_index])
+            in_html_comment = True
+            index = start_index + len("<!--")
+
+        return "".join(cleaned_parts)
 
     for raw_line in text.split("\n"):
-        if code_fence_pattern.match(raw_line):
+        if not in_html_comment and code_fence_pattern.match(raw_line):
             in_code = not in_code
             sanitized_lines.append(raw_line)
             continue
@@ -33,7 +58,7 @@ def sanitize_markdown(markdown_text):
             sanitized_lines.append(raw_line)
             continue
 
-        cleaned_line = comment_pattern.sub("", raw_line)
+        cleaned_line = strip_html_comments(raw_line)
         sanitized_lines.append(cleaned_line)
 
     return "\n".join(sanitized_lines)
