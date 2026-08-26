@@ -2,7 +2,14 @@ import os
 import time
 
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    InvalidElementStateException,
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+    WebDriverException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -122,6 +129,67 @@ def _build_driver():
     return webdriver.Chrome(options=options)
 
 
+def _is_editable_text_field(element):
+    try:
+        if not element.is_displayed() or not element.is_enabled():
+            return False
+        tag_name = (element.tag_name or "").lower()
+        if tag_name not in ("input", "textarea"):
+            return False
+        input_type = (element.get_attribute("type") or "text").lower()
+        if input_type in (
+            "button",
+            "checkbox",
+            "file",
+            "hidden",
+            "image",
+            "radio",
+            "reset",
+            "submit",
+        ):
+            return False
+        if element.get_attribute("readonly") is not None:
+            return False
+        if element.get_attribute("disabled") is not None:
+            return False
+        return True
+    except StaleElementReferenceException:
+        return False
+
+
+def _find_first(driver, selectors, predicate=None):
+    for by, value in selectors:
+        for element in driver.find_elements(by, value):
+            if predicate is None or predicate(element):
+                return element
+    return None
+
+
+def _set_field_value(driver, element, value):
+    try:
+        element.click()
+        element.clear()
+    except (InvalidElementStateException, ElementNotInteractableException):
+        driver.execute_script(
+            """
+            const el = arguments[0];
+            const valueSetter = Object.getOwnPropertyDescriptor(
+                Object.getPrototypeOf(el), 'value'
+            )?.set;
+            if (valueSetter) {
+                valueSetter.call(el, '');
+            } else {
+                el.value = '';
+            }
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            """,
+            element,
+        )
+        element.click()
+    element.send_keys(value)
+
+
 def get_note_cookies(email, password):
     """noteにログインしてCookieを取得"""
     if _is_truthy_env("NOTE_SHOW_BROWSER"):
@@ -134,14 +202,8 @@ def get_note_cookies(email, password):
         driver.get("https://note.com/login")
         wait = WebDriverWait(driver, 20)
 
-        def find_first(selectors):
-            for by, value in selectors:
-                elements = driver.find_elements(by, value)
-                if elements:
-                    return elements[0]
-            return None
-
-        email_login_entry = find_first(
+        email_login_entry = _find_first(
+            driver,
             [
                 (By.XPATH, "//a[contains(., 'メールアドレス') and contains(., 'ログイン')]"),
                 (By.XPATH, "//button[contains(., 'メールアドレス') and contains(., 'ログイン')]"),
@@ -153,46 +215,51 @@ def get_note_cookies(email, password):
             wait.until(EC.element_to_be_clickable(email_login_entry)).click()
 
         wait.until(
-            lambda d: find_first(
+            lambda d: _find_first(
+                d,
                 [
                     (By.NAME, "email"),
                     (By.NAME, "login"),
                     (By.CSS_SELECTOR, "input[type='email']"),
                     (By.CSS_SELECTOR, "input[autocomplete='username']"),
                     (By.XPATH, "//input[contains(@placeholder, 'メール')]"),
-                ]
+                ],
+                _is_editable_text_field,
             )
             is not None
         )
-        email_input = find_first(
+        email_input = _find_first(
+            driver,
             [
                 (By.NAME, "email"),
                 (By.NAME, "login"),
                 (By.CSS_SELECTOR, "input[type='email']"),
                 (By.CSS_SELECTOR, "input[autocomplete='username']"),
                 (By.XPATH, "//input[contains(@placeholder, 'メール')]"),
-            ]
+            ],
+            _is_editable_text_field,
         )
         if not email_input:
             raise TimeoutException("メールアドレス入力欄を検出できませんでした。")
 
-        password_input = find_first(
+        password_input = _find_first(
+            driver,
             [
                 (By.NAME, "password"),
                 (By.CSS_SELECTOR, "input[type='password']"),
                 (By.CSS_SELECTOR, "input[autocomplete='current-password']"),
                 (By.XPATH, "//input[contains(@placeholder, 'パスワード')]"),
-            ]
+            ],
+            _is_editable_text_field,
         )
         if not password_input:
             raise TimeoutException("パスワード入力欄を検出できませんでした。")
 
-        email_input.clear()
-        email_input.send_keys(email)
-        password_input.clear()
-        password_input.send_keys(password)
+        _set_field_value(driver, email_input, email)
+        _set_field_value(driver, password_input, password)
 
-        login_button = find_first(
+        login_button = _find_first(
+            driver,
             [
                 (By.XPATH, "//button[@type='submit']"),
                 (By.XPATH, "//button[contains(., 'ログイン')]"),
@@ -213,7 +280,13 @@ def get_note_cookies(email, password):
             return cookie_map
         login_error = "ログイン後Cookieに _note_session_v5 が含まれていません。"
 
-    except (TimeoutException, NoSuchElementException) as exc:
+    except (
+        TimeoutException,
+        NoSuchElementException,
+        InvalidElementStateException,
+        ElementNotInteractableException,
+        WebDriverException,
+    ) as exc:
         login_error = f"ログイン処理で要素取得に失敗しました: {exc}"
         print(login_error)
         print(f"current_url={driver.current_url}")
